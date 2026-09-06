@@ -13,35 +13,35 @@
    DESIGN TOKENS
    ============================================================ */
 :root{
-  --bg:#08090f;
-  --bg-soft:#0f1119;
-  --surface:rgba(255,255,255,.035);
-  --surface-strong:rgba(255,255,255,.065);
-  --surface-solid:#14151f;
-  --border:rgba(160,140,255,.16);
-  --border-strong:rgba(160,140,255,.34);
-  --violet:#8b6bff;
-  --violet-dim:#4f3f99;
-  --violet-ink:#c9bbff;
-  --cyan:#39d3e0;
-  --gold:#e7b84e;
-  --gold-dim:#4a3d24;
-  --text:#eef0fb;
-  --text-dim:#9ba0bd;
-  --text-faint:#666c8a;
-  --success:#39d398;
-  --success-ink:#0b3a2c;
-  --warning:#f0b74a;
-  --warning-ink:#402c05;
-  --danger:#f2637f;
-  --danger-ink:#3a0f1a;
+  --bg:#0b0710;
+  --bg-soft:#140d1a;
+  --surface:rgba(232,193,101,.045);
+  --surface-strong:rgba(232,193,101,.08);
+  --surface-solid:#171019;
+  --border:rgba(212,175,90,.2);
+  --border-strong:rgba(212,175,90,.42);
+  --violet:#7a2340;
+  --violet-dim:#3a1524;
+  --violet-ink:#d9b872;
+  --cyan:#c99a3f;
+  --gold:#e8c165;
+  --gold-dim:#4a3a1a;
+  --text:#f3ead9;
+  --text-dim:#b7ab92;
+  --text-faint:#7c7160;
+  --success:#5aa66d;
+  --success-ink:#122a1c;
+  --warning:#e0a94a;
+  --warning-ink:#3a2a08;
+  --danger:#b23a4e;
+  --danger-ink:#3a121a;
   --radius-xl:30px;
   --radius-lg:22px;
   --radius-md:16px;
   --radius-sm:11px;
   --radius-pill:999px;
   --shadow-soft:0 18px 50px -22px rgba(0,0,0,.6);
-  --shadow-glow:0 0 0 1px var(--border), 0 20px 60px -24px rgba(139,107,255,.45);
+  --shadow-glow:0 0 0 1px var(--border), 0 20px 60px -24px rgba(212,175,90,.35);
   --font-serif:'Fraunces','Iowan Old Style',Georgia,serif;
   --font-sans:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
   --ease:cubic-bezier(.4,0,.2,1);
@@ -50,30 +50,30 @@
 }
 
 body.light{
-  --bg:#f4f2fb;
-  --bg-soft:#ffffff;
-  --surface:rgba(30,20,60,.035);
-  --surface-strong:rgba(30,20,60,.06);
-  --surface-solid:#ffffff;
-  --border:rgba(90,60,180,.14);
-  --border-strong:rgba(90,60,180,.3);
-  --violet:#6d3fd6;
-  --violet-dim:#e3d9fb;
-  --violet-ink:#5a35b0;
-  --cyan:#0891a8;
+  --bg:#f7f1e3;
+  --bg-soft:#fffaf0;
+  --surface:rgba(107,31,42,.035);
+  --surface-strong:rgba(107,31,42,.06);
+  --surface-solid:#fffdf8;
+  --border:rgba(139,101,26,.18);
+  --border-strong:rgba(139,101,26,.36);
+  --violet:#7a2340;
+  --violet-dim:#f3dbe2;
+  --violet-ink:#7a2340;
+  --cyan:#8a6415;
   --gold:#a9791b;
   --gold-dim:#f6ecd2;
-  --text:#181a26;
-  --text-dim:#54587a;
-  --text-faint:#8b8fa8;
-  --success:#0f9d6c;
-  --success-ink:#e3faf0;
+  --text:#241a12;
+  --text-dim:#5c4f3d;
+  --text-faint:#8f8264;
+  --success:#3f8a5e;
+  --success-ink:#e5f5ea;
   --warning:#a3670c;
   --warning-ink:#fdf1dc;
-  --danger:#c92f52;
-  --danger-ink:#fce9ee;
-  --shadow-soft:0 18px 40px -24px rgba(90,60,180,.25);
-  --shadow-glow:0 0 0 1px var(--border), 0 20px 50px -28px rgba(90,60,180,.3);
+  --danger:#8f2236;
+  --danger-ink:#fbe7ea;
+  --shadow-soft:0 18px 40px -24px rgba(122,35,64,.2);
+  --shadow-glow:0 0 0 1px var(--border), 0 20px 50px -28px rgba(169,121,27,.28);
   color-scheme: light;
 }
 
@@ -131,6 +131,13 @@ a{color:inherit;}
 @media (prefers-reduced-motion:reduce){
   .bg-decor::before, .bg-decor::after{ animation:none; }
 }
+.stained-glass-overlay{
+  position:fixed; inset:0; z-index:-1; pointer-events:none;
+  opacity:.05;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cpath d='M60 4 L116 60 L60 116 L4 60 Z' fill='none' stroke='%23e8c165' stroke-width='1'/%3E%3Cpath d='M60 26 V94 M26 60 H94' stroke='%237a2340' stroke-width='2' stroke-linecap='round'/%3E%3C/svg%3E");
+  background-size:120px 120px;
+}
+body.light .stained-glass-overlay{ opacity:.08; }
 
 /* App shell ---------------------------------------------------------------*/
 .app{
@@ -158,22 +165,50 @@ main{display:flex; flex-direction:column; gap:22px;}
   justify-content:space-between;
   align-items:center;
   gap:28px;
-  background:linear-gradient(155deg, rgba(139,107,255,.22), rgba(57,211,224,.10) 60%, transparent);
+  background:linear-gradient(155deg, rgba(122,35,64,.38), rgba(232,193,101,.12) 60%, transparent);
   border:1px solid var(--border);
   border-radius:var(--radius-xl);
   padding:34px 36px;
   margin-bottom:4px;
   box-shadow:var(--shadow-glow);
 }
+.hero::after{
+  content:'';
+  position:absolute; left:0; right:0; bottom:0; height:12px;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='12'%3E%3Cpath d='M0 12 Q10 0 20 12 Q30 0 40 12' fill='none' stroke='%23e8c165' stroke-width='1.4'/%3E%3C/svg%3E");
+  background-repeat:repeat-x;
+  background-size:40px 12px;
+  opacity:.5;
+  pointer-events:none;
+}
 .cross-motif{
   position:absolute;
   right:-10px; top:50%; transform:translateY(-50%);
   width:180px; height:180px;
-  opacity:.07;
-  stroke:var(--text);
+  opacity:.16;
+  stroke:var(--gold);
   z-index:0;
 }
-body.light .cross-motif{ opacity:.05; }
+body.light .cross-motif{ opacity:.09; }
+.hero-glow-cross{
+  position:absolute;
+  top:-8px;
+  left:50%;
+  transform:translateX(-50%);
+  width:72px;
+  height:98px;
+  z-index:0;
+  opacity:.55;
+  pointer-events:none;
+  animation:crossGlowPulse 5s ease-in-out infinite;
+}
+.hero-glow-cross svg{ width:100%; height:100%; }
+@keyframes crossGlowPulse{
+  0%,100%{ filter:drop-shadow(0 0 10px rgba(232,193,101,.45)) drop-shadow(0 0 26px rgba(232,193,101,.2)); opacity:.5; }
+  50%{ filter:drop-shadow(0 0 18px rgba(232,193,101,.7)) drop-shadow(0 0 42px rgba(232,193,101,.36)); opacity:.78; }
+}
+@media (prefers-reduced-motion:reduce){ .hero-glow-cross{ animation:none; filter:drop-shadow(0 0 14px rgba(232,193,101,.5)); } }
+@media (max-width:760px){ .hero-glow-cross{ top:-2px; width:52px; height:70px; } }
 .hero-main, .hero-side{ position:relative; z-index:1; }
 .hero-eyebrow{
   font-size:.82rem;
@@ -182,6 +217,7 @@ body.light .cross-motif{ opacity:.05; }
   font-weight:600;
   margin-bottom:6px;
 }
+.hero-eyebrow::before{ content:'✝ '; color:var(--gold); }
 .hero-title{
   font-family:var(--font-serif);
   font-weight:600;
@@ -251,6 +287,7 @@ body.light .cross-motif{ opacity:.05; }
    CARD PRIMITIVES
    ============================================================ */
 .surface-card{
+  position:relative;
   background:var(--surface);
   border:1px solid var(--border);
   border-radius:var(--radius-lg);
@@ -258,6 +295,16 @@ body.light .cross-motif{ opacity:.05; }
   backdrop-filter:blur(14px);
   box-shadow:var(--shadow-soft);
 }
+.surface-card::before, .surface-card::after{
+  content:'';
+  position:absolute;
+  width:18px; height:18px;
+  border:1.5px solid var(--gold);
+  opacity:.38;
+  pointer-events:none;
+}
+.surface-card::before{ top:9px; left:9px; border-right:none; border-bottom:none; border-radius:7px 0 0 0; }
+.surface-card::after{ bottom:9px; right:9px; border-left:none; border-top:none; border-radius:0 0 7px 0; }
 
 /* Today's focus ------------------------------------------------------------*/
 .focus-card{
@@ -270,6 +317,7 @@ body.light .cross-motif{ opacity:.05; }
   font-size:.78rem; font-weight:700; letter-spacing:.02em;
   color:var(--gold);
 }
+.focus-eyebrow::before{ content:'✝ '; }
 .focus-head h2{
   font-family:var(--font-serif); font-weight:600;
   font-size:1.7rem; margin-top:4px;
@@ -359,6 +407,23 @@ body.light .focus-stats{ border-left-color:var(--border); }
 .card-head{ display:flex; align-items:center; gap:10px; margin-bottom:16px; }
 .card-icon{ font-size:1.3rem; }
 .card-head h3{ font-family:var(--font-serif); font-size:1.15rem; font-weight:600; }
+.card-head h3::after{ content:'✝'; color:var(--gold); font-size:.8rem; margin-left:8px; opacity:.7; }
+.verse-card, .motivation-card{
+  background:
+    linear-gradient(90deg, var(--gold), var(--violet), var(--gold)) top / 100% 3px no-repeat,
+    radial-gradient(circle at 50% -10%, rgba(232,193,101,.12), transparent 60%),
+    var(--surface);
+}
+.ornament-divider{
+  display:flex; align-items:center; gap:10px;
+  color:var(--gold); font-size:.85rem; opacity:.8;
+  margin:0 0 16px;
+}
+.ornament-divider::before, .ornament-divider::after{
+  content:'';
+  flex:1; height:1px;
+  background:linear-gradient(90deg, transparent, var(--border-strong), transparent);
+}
 .verse-text{
   direction:rtl; text-align:center; font-size:1.15rem; line-height:1.9;
   font-family:'Traditional Arabic','Fraunces',serif;
@@ -390,8 +455,8 @@ body.light .focus-stats{ border-left-color:var(--border); }
   font-weight:600;
   transition:transform .2s var(--ease), box-shadow .2s var(--ease), background .2s var(--ease);
 }
-.btn:hover{ transform:translateY(-1px); box-shadow:0 8px 22px -12px rgba(139,107,255,.5); }
-.btn.primary{ background:linear-gradient(135deg, var(--violet), var(--cyan)); border-color:transparent; color:#0b0c14; }
+.btn:hover{ transform:translateY(-1px); box-shadow:0 8px 22px -12px rgba(212,175,90,.45); }
+.btn.primary{ background:linear-gradient(135deg, var(--violet), var(--gold)); border-color:transparent; color:#2a1015; font-weight:700; }
 .btn.ghost{ background:transparent; }
 .btn.danger{ background:var(--danger); border-color:transparent; color:#fff; }
 .btn:disabled{ opacity:.4; cursor:not-allowed; transform:none; box-shadow:none; }
@@ -401,9 +466,9 @@ body.light .focus-stats{ border-left-color:var(--border); }
 .accountability-icon{ font-size:1.9rem; }
 .accountability-title{ font-family:var(--font-serif); font-size:1.15rem; font-weight:600; }
 .accountability-msg{ color:var(--text-dim); font-size:.92rem; margin-top:2px; }
-.accountability-card.status-green{ border-color:rgba(57,211,152,.35); }
-.accountability-card.status-yellow{ border-color:rgba(240,183,74,.4); }
-.accountability-card.status-red{ border-color:rgba(242,99,127,.4); }
+.accountability-card.status-green{ border-color:rgba(90,166,109,.4); }
+.accountability-card.status-yellow{ border-color:rgba(224,169,74,.45); }
+.accountability-card.status-red{ border-color:rgba(178,58,78,.45); }
 
 /* Toolbar ------------------------------------------------------------------------*/
 .toolbar{ display:flex; gap:14px; flex-wrap:wrap; align-items:center; justify-content:space-between; }
@@ -418,11 +483,12 @@ body.light .focus-stats{ border-left-color:var(--border); }
   background:var(--surface); color:var(--text-dim); font-size:.84rem; font-weight:600;
   transition:all .2s var(--ease);
 }
-.filter-btn.active{ background:linear-gradient(135deg,var(--violet),var(--cyan)); color:#0b0c14; border-color:transparent; }
+.filter-btn.active{ background:linear-gradient(135deg,var(--violet),var(--gold)); color:#2a1015; border-color:transparent; }
 
 /* Plan section ----------------------------------------------------------------*/
 .section-heading{ margin-bottom:16px; }
 .section-heading h2{ font-family:var(--font-serif); font-size:1.5rem; font-weight:600; }
+.heading-cross{ color:var(--gold); margin-right:4px; text-shadow:0 0 12px rgba(232,193,101,.5); }
 .section-heading p{ color:var(--text-faint); font-size:.88rem; margin-top:4px; }
 
 .day-card{
@@ -441,7 +507,7 @@ body.light .focus-stats{ border-left-color:var(--border); }
 }
 .day-name{ font-family:var(--font-serif); font-size:1.15rem; font-weight:600; min-width:96px; }
 .today-badge{
-  font-size:.68rem; font-weight:700; letter-spacing:.03em; color:#241a02;
+  font-size:.68rem; font-weight:700; letter-spacing:.03em; color:#3a0f17;
   background:var(--gold); padding:3px 9px; border-radius:var(--radius-pill);
 }
 .lock-badge{ font-size:.72rem; color:var(--danger); font-weight:600; }
@@ -552,7 +618,7 @@ body.light .focus-stats{ border-left-color:var(--border); }
 
 /* Modal -------------------------------------------------------------------------*/
 .modal-overlay{
-  position:fixed; inset:0; background:rgba(4,4,10,.62); backdrop-filter:blur(3px);
+  position:fixed; inset:0; background:rgba(10,5,8,.66); backdrop-filter:blur(3px);
   display:flex; align-items:center; justify-content:center; z-index:3000; padding:20px;
   animation:overlayIn .2s var(--ease);
 }
@@ -582,6 +648,7 @@ body.light .focus-stats{ border-left-color:var(--border); }
 <body>
 
 <div class="bg-decor" aria-hidden="true"></div>
+<div class="stained-glass-overlay" aria-hidden="true"></div>
 <div id="toastContainer" class="toast-container" aria-live="polite" aria-atomic="true"></div>
 
 <div class="app" id="app">
@@ -590,6 +657,18 @@ body.light .focus-stats{ border-left-color:var(--border); }
       <line x1="50" y1="8" x2="50" y2="92" stroke-width="6" stroke-linecap="round"/>
       <line x1="20" y1="34" x2="80" y2="34" stroke-width="6" stroke-linecap="round"/>
     </svg>
+    <div class="hero-glow-cross" aria-hidden="true">
+      <svg viewBox="0 0 120 160" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <linearGradient id="heroCrossGrad" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%" stop-color="#f6da9a"/>
+            <stop offset="100%" stop-color="#c99a3f"/>
+          </linearGradient>
+        </defs>
+        <line x1="60" y1="14" x2="60" y2="146" stroke="url(#heroCrossGrad)" stroke-width="9" stroke-linecap="round"/>
+        <line x1="22" y1="52" x2="98" y2="52" stroke="url(#heroCrossGrad)" stroke-width="9" stroke-linecap="round"/>
+      </svg>
+    </div>
     <div class="hero-main">
       <p class="hero-eyebrow" id="greeting">Good Evening</p>
       <h1 class="hero-title">Christian Study Tracker</h1>
@@ -605,8 +684,8 @@ body.light .focus-stats{ border-left-color:var(--border); }
         <svg class="ring" viewBox="0 0 120 120" role="img" aria-label="Weekly progress">
           <defs>
             <linearGradient id="ringGrad" x1="0" y1="0" x2="1" y2="1">
-              <stop offset="0%" stop-color="#8b6bff"/>
-              <stop offset="100%" stop-color="#39d3e0"/>
+              <stop offset="0%" stop-color="#e8c165"/>
+              <stop offset="100%" stop-color="#7a2340"/>
             </linearGradient>
           </defs>
           <circle class="ring-track" cx="60" cy="60" r="52"></circle>
@@ -634,6 +713,7 @@ body.light .focus-stats{ border-left-color:var(--border); }
     <section class="dual-grid">
       <div class="surface-card verse-card" id="verseCard">
         <div class="card-head"><span class="card-icon">📖</span><h3>Verse of the Day</h3></div>
+        <div class="ornament-divider" aria-hidden="true"><span>✝</span></div>
         <div class="verse-text" id="verseText">Loading verse…</div>
         <div class="verse-ref" id="verseRef"></div>
         <div class="card-actions">
@@ -643,7 +723,8 @@ body.light .focus-stats{ border-left-color:var(--border); }
         </div>
       </div>
       <div class="surface-card motivation-card" id="motivationCard">
-        <div class="card-head"><span class="card-icon">💫</span><h3>Encouragement</h3></div>
+        <div class="card-head"><span class="card-icon">🕊️</span><h3>Encouragement</h3></div>
+        <div class="ornament-divider" aria-hidden="true"><span>✝</span></div>
         <div class="motivation-text" id="motivationText">ربنا معاك</div>
         <div class="card-actions">
           <button class="btn primary" id="newMotivationBtn">New Message</button>
@@ -668,14 +749,14 @@ body.light .focus-stats{ border-left-color:var(--border); }
 
     <section class="plan-section">
       <div class="section-heading">
-        <h2>Weekly Study Plan</h2>
+        <h2><span class="heading-cross">✝</span> Weekly Study Plan</h2>
         <p>Future days unlock automatically at midnight. Nothing here can be skipped ahead of time.</p>
       </div>
       <div id="studyPlan"></div>
     </section>
 
     <section class="surface-card settings-panel" id="settingsPanel" hidden aria-label="Settings">
-      <h2>Settings</h2>
+      <h2>🕯️ Settings</h2>
       <div class="settings-row">
         <span>Appearance</span>
         <button class="btn ghost" id="themeToggleSettings">Switch to Light</button>
@@ -700,7 +781,8 @@ body.light .focus-stats{ border-left-color:var(--border); }
   </main>
 
   <footer class="app-footer">
-    <p>Christian Study Tracker</p>
+    <p>⛪ Christian Study Tracker</p>
+    <div class="ornament-divider" aria-hidden="true" style="max-width:220px;margin-left:auto;margin-right:auto;"><span>✝</span></div>
     <p>Study with discipline. Grow with faith.</p>
     <p id="footerYear"></p>
   </footer>
