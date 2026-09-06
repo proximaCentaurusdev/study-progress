@@ -1,0 +1,853 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/png" href="study.png">
+    <title>Christian Study Tracker</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #0a0a0f;
+            color: #fff;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            padding: 40px 20px;
+            background: linear-gradient(135deg, #8a2be2, #00bfff);
+            border-radius: 20px;
+            margin-bottom: 30px;
+            box-shadow: 0 0 30px rgba(138, 43, 226, 0.5);
+            animation: glow 2s ease-in-out infinite alternate;
+        }
+
+        @keyframes glow {
+            from { box-shadow: 0 0 20px rgba(138, 43, 226, 0.5); }
+            to { box-shadow: 0 0 40px rgba(0, 191, 255, 0.8); }
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 0 0 20px rgba(255, 255, 255, 0.5);
+        }
+
+        .dashboard {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 25px;
+            margin-bottom: 30px;
+            /* تم التأكد من إزالة خاصية الثبات (sticky) */
+        }
+
+        .card {
+            background: rgba(20, 20, 30, 0.8);
+            border: 2px solid #8a2be2;
+            border-radius: 15px;
+            padding: 25px;
+            backdrop-filter: blur(10px);
+            transition: all 0.3s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(138, 43, 226, 0.6);
+            border-color: #00bfff;
+        }
+
+        .card h2 {
+            color: #00bfff;
+            margin-bottom: 20px;
+            font-size: 1.5em;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 30px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            overflow: hidden;
+            margin: 20px 0;
+            border: 1px solid #8a2be2;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #8a2be2, #00bfff);
+            transition: width 0.5s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            box-shadow: 0 0 20px rgba(0, 191, 255, 0.8);
+        }
+
+        .day-section {
+            background: rgba(138, 43, 226, 0.15);
+            border: 2px solid #8a2be2;
+            border-radius: 12px;
+            padding: 20px;
+            margin: 15px 0;
+            transition: opacity 0.3s ease;
+        }
+        
+        /* Locked Day Style */
+        .day-section.locked {
+            opacity: 0.4;
+            pointer-events: none;
+            user-select: none;
+            border-color: #ff3366;
+            background: rgba(255, 51, 102, 0.1);
+        }
+
+        .day-header {
+            font-size: 1.3em;
+            color: #00bfff;
+            font-weight: bold;
+            margin-bottom: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .day-section.locked .day-header {
+            color: #ff3366;
+        }
+        .day-section.locked .day-header::after {
+            content: ' 🔒 مقفل';
+            font-size: 0.8em;
+            color: #ff3366;
+        }
+
+
+        .task-item {
+            background: rgba(0, 191, 255, 0.1);
+            border-left: 4px solid #00bfff;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .task-item:hover {
+            background: rgba(0, 191, 255, 0.2);
+            transform: translateX(5px);
+        }
+
+        .task-item.completed {
+            border-left-color: #00ff88;
+            opacity: 0.7;
+            text-decoration: line-through;
+        }
+
+        .task-item.editing {
+            background: rgba(138, 43, 226, 0.2);
+            border-left-color: #8a2be2;
+        }
+
+        .task-text {
+            flex: 1;
+            padding: 5px;
+            border-radius: 5px;
+        }
+
+        .task-edit-input {
+            flex: 1;
+            background: rgba(255, 255, 255, 0.1);
+            border: 2px solid #00bfff;
+            color: #fff;
+            padding: 10px;
+            border-radius: 8px;
+            font-size: 1em;
+            outline: none;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #8a2be2, #00bfff);
+            color: #fff;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.9em;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(138, 43, 226, 0.4);
+        }
+
+        .btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 6px 25px rgba(0, 191, 255, 0.6);
+        }
+
+        .btn-small {
+            padding: 6px 12px;
+            font-size: 0.85em;
+        }
+
+        .btn-danger {
+            background: #ff3366;
+        }
+
+        .btn-success {
+            background: #00ff88;
+            color: #0a0a0f;
+        }
+        
+        .btn-undo {
+             background: #ffa500;
+             color: #0a0a0f;
+             margin-right: 15px;
+        }
+
+        .btn-edit {
+            background: #ffa500;
+            color: #0a0a0f;
+        }
+
+        .verse-box {
+            background: linear-gradient(135deg, rgba(138, 43, 226, 0.2), rgba(0, 191, 255, 0.2));
+            border: 2px solid #8a2be2;
+            border-radius: 15px;
+            padding: 25px;
+            text-align: center;
+            font-size: 1.2em;
+            line-height: 1.8;
+            direction: rtl;
+            font-family: 'Traditional Arabic', 'Arial', sans-serif;
+            box-shadow: 0 0 20px rgba(138, 43, 226, 0.4);
+            margin: 20px 0;
+        }
+
+        .motivation-box {
+            background: rgba(0, 191, 255, 0.2);
+            border: 2px solid #00bfff;
+            border-radius: 10px;
+            padding: 20px;
+            text-align: center;
+            font-size: 1.3em;
+            direction: rtl;
+            font-family: 'Traditional Arabic', 'Arial', sans-serif;
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.02); }
+        }
+
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: linear-gradient(135deg, #8a2be2, #00bfff);
+            color: #fff;
+            padding: 20px 30px;
+            border-radius: 10px;
+            box-shadow: 0 10px 30px rgba(138, 43, 226, 0.6);
+            z-index: 1000;
+            animation: slideIn 0.5s ease;
+            max-width: 400px;
+        }
+
+        .notification.warning {
+            background: linear-gradient(135deg, #ff3366, #ffa500);
+        }
+
+        @keyframes slideIn {
+            from { transform: translateX(400px); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+
+        .stat-card {
+            background: rgba(138, 43, 226, 0.2);
+            border: 2px solid #8a2be2;
+            border-radius: 10px;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .stat-number {
+            font-size: 2.5em;
+            color: #00bfff;
+            font-weight: bold;
+        }
+
+        .stat-label {
+            color: #ccc;
+            margin-top: 5px;
+        }
+
+        .alert-panel {
+            background: rgba(255, 51, 102, 0.2);
+            border: 2px solid #ff3366;
+            border-radius: 10px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+
+        .alert-panel h3 {
+            color: #ff3366;
+            margin-bottom: 15px;
+        }
+
+        @media (max-width: 768px) {
+            .dashboard {
+                grid-template-columns: 1fr;
+            }
+            
+            .header h1 {
+                font-size: 1.8em;
+            }
+
+            .notification {
+                right: 10px;
+                left: 10px;
+                max-width: none;
+            }
+        }
+
+        ::-webkit-scrollbar {
+            width: 10px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: linear-gradient(180deg, #8a2be2, #00bfff);
+            border-radius: 10px;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 8px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📚 Christian Study Tracker</h1>
+            <p>Track your study progress with faith and dedication</p>
+        </div>
+
+        <div id="notification" class="notification" style="display: none;"></div>
+
+        <div class="dashboard">
+            <div class="card">
+                <h2>📊 التقدم الأسبوعي</h2>
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-number" id="completedCount">0</div>
+                        <div class="stat-label">مكتمل</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number" id="pendingCount">0</div>
+                        <div class="stat-label">قيد الانتظار</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number" id="progressPercent">0</div>
+                        <div class="stat-label">% منجز</div>
+                    </div>
+                </div>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progressBar" style="width: 0%;">0%</div>
+                </div>
+                <button id="undoButton" class="btn btn-undo" onclick="revertLastAction()" disabled>↩️ تراجع عن الإجراء الأخير</button>
+            </div>
+
+            <div class="card">
+                <h2>📖 آية اليوم</h2>
+                <div class="verse-box" id="dailyVerse">جاري تحميل الآية...</div>
+                <button class="btn" onclick="changeVerse()" style="width: 100%; margin-top: 15px;">آية جديدة</button>
+            </div>
+
+            <div class="card">
+                <h2>💫 تشجيع روحي</h2>
+                <div class="motivation-box" id="motivation">ربنا معاك</div>
+                <button class="btn" onclick="changeMotivation()" style="width: 100%; margin-top: 15px;">رسالة جديدة</button>
+                
+                <div style="margin-top: 20px; padding: 15px; background: rgba(0, 191, 255, 0.1); border-radius: 10px; text-align: center;">
+                    <p style="color: #00bfff; font-weight: bold;">📖 تذكر قراءة الإنجيل اليوم!</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="alert-panel" id="alertPanel" style="display: none;">
+            <h3>⚠️ تنبيه المساءلة</h3>
+            <div id="alertContent"></div>
+        </div>
+
+        <div class="card" style="margin-top: 50px;">
+            <h2>📅 خطة الدراسة الأسبوعية</h2>
+            <p style="color: #ccc; margin-bottom: 20px;">المهام للأيام القادمة مقفلة حتى يحين وقتها (منتصف الليل).</p>
+            <div id="studyPlan"></div>
+        </div>
+    </div>
+
+    <script>
+        // --- Configuration & Data ---
+        // ترتيب الأيام في JavaScript (0=الأحد, 6=السبت)
+        const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+        
+        // ترتيب عرض الأيام في الخطة (السبت أولًا كما هو في خطتك)
+        const displayDaysOrder = ['Saturday', 'Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
+        
+        const studyPlanData = {
+            Saturday: [
+                "1st session: Math", "Break (10 min)", "2nd session: Math", "Break (15 min)", "Part of session: MO Salah", 
+                "Recap on the whole vocab in English", "Break (15 min) - Cup of tea ya m3alem", "More of Mo Salah", 
+                "Solving questions and last year's exams on the content studied"
+            ],
+            Sunday: [
+                "1st session of Physics", "Break (10 min)", "2nd session of Physics", "Break (30 min)", "1st session: Geo", 
+                "Revision on the math content", "Solving questions and last year's exams on the content studied", "Rest in peace, نام بقا"
+            ],
+            Monday: [
+                "1st session: Mecha", "2nd session: Mecha", "Break (15 min)", "The last part of session: MO Salah", 
+                "Recap on English content of Sunday", "Solving questions and last year's exams on the content studied"
+            ],
+            Tuesday: [
+                "1st session: Bio", "Break (10 min)", "2nd session: Bio", "Break (15 min)", "French revision لو قدرت", 
+                "Writing journals or part of MO Salah session", "Writing journal or solving bio questions", 
+                "Hatkhmed or solving Arabic questions"
+            ],
+            Wednesday: [
+                "1st session: Physics", "Break (10 min)", "2nd session: Physics", "Break (15 min)", 
+                "Arabic revision علي السخان متاخدش اكتر من 30 Min", "Learning new vocab and studying grammar", 
+                "Break (15 min)", "Coding and embedded system revision", "Solving questions and last year's exams on the content studied"
+            ],
+            Thursday: [
+                "1st session: Chem", "Break (10 min)", "2nd session: Chem", "Break (15 min)", "Study the second unit in French", 
+                "Revision on English vocab and novel", "Turn off the mood of studying and go out of home", 
+                "Solving questions and last year's exams on the content studied"
+            ],
+            Friday: [
+                "Going to church to attend the holy mass", "Revision on all sessions of math and mech", 
+                "From notebook and solving files hosny", "Studying parts of MO Salah Session", "Break (15 min)", 
+                "Solving questions and last year's exams on the content studied", "Break all of day", "Break all day"
+            ]
+        };
+
+        const bibleVerses = [
+            "الرَّبَّ رَؤُوفٌ رَحِيمٌ، يَغْفِرُ الْخَطَايَا وَيُخَلِّصُ فِي يَوْمِ الضِّيقِ (يشوع بن سيراخ ٢: ١٣)",
+            "لأَنَّهُ تَعَلَّقَ بِي أُنَجِّيهِ... مَعَهُ أَنَا فِي الضِّيقْ، أُنْقِذُهُ وَأُمَجِّدُهُ (المزامير ٩١: ١٤–١٦)",
+            "ضِيْقٌ وَشِدَّةٌ أَصَابَانِي، أَمَّا وَصَايَاكَ فَهِيَ لَذَّاتِي (المزامير ١١٩: ١٤٣)",
+            "فَرِحِينَ فِي الرَّجَاءِ، صَابِرِينَ فِي الضَّيْقِ، مُواظِبِينَ عَلَى الصَّلاَةِ (رومية ١٢: ١٢)",
+            "فِي الْعَالَمِ سَيَكُونُ لَكُمْ ضِيقٌ، وَلكِنْ ثِقُوا: أَنَا قَدْ غَلَبْتُ الْعَالَمَ (يوحنا ١٦: ٣٣)",
+            "فَيُرْسِلُ لَهُمْ مُخَلِّصًا وَمُحَامِيًا وَيُنْقِذُهُمْ (إشعياء ١٩: ٢٠)",
+            "كَثِيرُونَ قَائِمُونَ عَلَيَّ... لَيْسَ لَهُ خَلاَصٌ بِإِلهِهِ (المزامير ٣: ١–٢)",
+            "لاَ تَحْزَنُوا، لأَنَّ فَرَحَ الرَّبِّ هُوَ قُوَّتُكُمْ (نحميا ٨: ١٠)",
+            "بِهِ يُنْتَهَى إِلَى النَّجَاحِ، وَبِكَلِمَتِهِ يَقُومُ الْجَمِيعُ (يشوع بن سيراخ ٤٣: ٢٨)",
+            "رُبَّ نَجَاحٍ يَكُونُ لأَذَى صَاحِبِهِ! (يشوع بن سيراخ ٢٠: ٩)",
+            "أَمَّا الْحِكْمَةُ فَنَافِعَةٌ لِلإِنْجَاحِ (الجامعة ١٠: ١٠)",
+            "إِنَّ إِلهَ السَّمَاءِ يُعْطِينَا النَّجَاحَ (نحميا ٢: ٢٠)",
+            "أَعْطِ النَّجَاحَ الْيَوْمَ لِعَبْدِكَ (نحميا ١: ١١)",
+            "كَانَ الرَّبُّ مَعَ يُوسُفَ فَكَانَ رَجُلًا نَاجِحًا (التكوين ٣٩: ٢)",
+            "أَرُومُ أَنْ تَكُونَ نَاجِحًا وَصَحِيحًا (٣ يوحنا ١: ٢)"
+        ];
+
+        const motivations = [
+            "ربنا معاك", "ربنا موجود ومش هيسيبك", "ربنا بيختار لك الخير", "أنت مش لوحدك… ربنا سندك", 
+            "كمّل… نعمة ربنا مكفيّاك", "ربنا يفتح قدامك أبواب النجاح", "إنت محبوب من ربنا"
+        ];
+        
+        // --- State Variables ---
+        let tasks = {};
+        let editingTaskId = null;
+        let lastAction = null; 
+
+        // --- Core Functions ---
+
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeTasks();
+            loadData();
+            renderStudyPlan();
+            changeVerse();
+            changeMotivation();
+            updateStats();
+            checkAccountability();
+            updateUndoButtonState();
+            
+            // تحديث الخطة عند منتصف الليل لفتح اليوم الجديد
+            scheduleMidnightUpdate();
+
+            setTimeout(() => {
+                showNotification('🙏 ' + motivations[0]);
+            }, 2000);
+        });
+
+        function initializeTasks() {
+            Object.keys(studyPlanData).forEach(day => {
+                tasks[day] = studyPlanData[day].map((task, index) => ({
+                    id: `${day}-${index}`,
+                    text: task,
+                    completed: false,
+                    day: day
+                }));
+            });
+        }
+        
+        // دالة مصححة لحساب تاريخ الوقوع التالي ليوم الخطة
+        function getPlanDayDate(dayName) {
+            const today = new Date();
+            const todayIndex = today.getDay(); // 0 (Sunday) to 6 (Saturday)
+            const planIndex = dayNames.indexOf(dayName); // 0 (Sunday) to 6 (Saturday)
+
+            // حساب عدد الأيام اللازمة للوصول إلى اليوم المستهدف
+            let daysToAdd = planIndex - todayIndex;
+            
+            // إذا كان اليوم المستهدف قد مر بالفعل هذا الأسبوع (مثلاً: اليوم خميس وتطلب أحد)، أضف 7 أيام
+            if (daysToAdd < 0) {
+                daysToAdd += 7;
+            }
+
+            const planDayDate = new Date(today);
+            planDayDate.setDate(today.getDate() + daysToAdd);
+            
+            return planDayDate;
+        }
+
+        function isDayLocked(day) {
+            const today = new Date();
+            // ضبط وقت اليوم الحالي إلى منتصف الليل للمقارنة فقط بالتاريخ
+            today.setHours(0, 0, 0, 0); 
+            
+            // الحصول على تاريخ الوقوع التالي ليوم الخطة
+            const planDate = getPlanDayDate(day);
+            planDate.setHours(0, 0, 0, 0); 
+            
+            // إذا كان تاريخ يوم الخطة أكبر تمامًا من تاريخ اليوم، فهو يوم مستقبلي ومقفل
+            return planDate.getTime() > today.getTime();
+        }
+
+        function renderStudyPlan() {
+            const container = document.getElementById('studyPlan');
+            
+            container.innerHTML = displayDaysOrder.map(day => {
+                const isLocked = isDayLocked(day);
+                const dayTasks = tasks[day] || [];
+                const completedCount = dayTasks.filter(t => t.completed).length;
+                const totalCount = dayTasks.length;
+                
+                return `
+                    <div class="day-section ${isLocked ? 'locked' : ''}">
+                        <div class="day-header">
+                            <span>📅 ${day}</span>
+                            <span style="font-size: 0.9em; color: #ccc;">${completedCount}/${totalCount} مكتملة</span>
+                        </div>
+                        ${dayTasks.map(task => renderTask(task, isLocked)).join('')}
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function renderTask(task, isLocked) {
+            if (editingTaskId === task.id) {
+                return `
+                    <div class="task-item editing">
+                        <input type="text" class="task-edit-input" id="edit-${task.id}" value="${task.text}">
+                        <div class="action-buttons">
+                            <button class="btn btn-success btn-small" onclick="saveEdit('${task.id}')">💾 حفظ</button>
+                            <button class="btn btn-danger btn-small" onclick="cancelEdit()">✕ إلغاء</button>
+                        </div>
+                    </div>
+                `;
+            }
+            
+            const disabled = isLocked ? 'disabled' : '';
+            
+            const submitButton = task.completed 
+                ? `<button class="btn btn-small" onclick="toggleComplete('${task.id}')" ${disabled}>🔄 إعادة</button>`
+                : `<button class="btn btn-success btn-small" onclick="toggleComplete('${task.id}')" ${disabled}>✅ إكمال</button>`;
+
+            return `
+                <div class="task-item ${task.completed ? 'completed' : ''}">
+                    <div class="task-text">${task.text}</div>
+                    <div class="action-buttons">
+                        ${submitButton}
+                        <button class="btn btn-edit btn-small" onclick="startEdit('${task.id}')" ${disabled}>✏️ تعديل</button>
+                        <button class="btn btn-danger btn-small" onclick="deleteTask('${task.id}')" ${disabled}>🗑️</button>
+                    </div>
+                </div>
+            `;
+        }
+
+        function toggleComplete(taskId) {
+            const [day] = taskId.split('-');
+            const task = tasks[day].find(t => t.id === taskId);
+            
+            if (task && !isDayLocked(day)) {
+                // تخزين الحالة قبل التغيير لزر التراجع
+                lastAction = { 
+                    id: taskId, 
+                    wasCompleted: task.completed, 
+                };
+
+                task.completed = !task.completed;
+                
+                saveData();
+                renderStudyPlan();
+                updateStats();
+                updateUndoButtonState();
+                
+                if (task.completed) {
+                    showNotification('✅ عمل رائع! تم إكمال المهمة!');
+                    setTimeout(() => {
+                        changeMotivation();
+                    }, 1500);
+                } else {
+                    showNotification('🔄 تم وضع المهمة كقيد انتظار/إعادة.', 'warning');
+                }
+            }
+        }
+        
+        function revertLastAction() {
+            if (!lastAction) return;
+
+            const { id: taskId, wasCompleted } = lastAction;
+            const [day] = taskId.split('-');
+            const task = tasks[day].find(t => t.id === taskId);
+
+            if (task) {
+                // استعادة الحالة السابقة
+                task.completed = wasCompleted;
+                
+                // مسح آخر إجراء
+                lastAction = null;
+                
+                saveData();
+                renderStudyPlan();
+                updateStats();
+                updateUndoButtonState();
+                
+                const actionReverted = wasCompleted ? 'مكتملة' : 'قيد الانتظار';
+                showNotification(`↩️ تم التراجع عن الإجراء. المهمة الآن ${actionReverted}.`);
+            }
+        }
+
+        function updateUndoButtonState() {
+            const button = document.getElementById('undoButton');
+            if (button) {
+                button.disabled = !lastAction;
+            }
+        }
+
+        function scheduleMidnightUpdate() {
+            const now = new Date();
+            const midnight = new Date(now);
+            midnight.setDate(now.getDate() + 1);
+            midnight.setHours(0, 0, 1, 0); // 12:00:01 AM
+            
+            const timeToMidnight = midnight.getTime() - now.getTime();
+            
+            setTimeout(() => {
+                // تحديث الخطة فورًا عند منتصف الليل
+                renderStudyPlan();
+                showNotification('✨ يوم جديد سعيد! مهام اليوم الجديد متاحة الآن.', 'info');
+                // إعادة جدولة التحديث لليوم التالي
+                scheduleMidnightUpdate(); 
+            }, timeToMidnight);
+        }
+        
+        function startEdit(taskId) {
+            const [day] = taskId.split('-');
+            if (isDayLocked(day)) return; 
+            
+            if (editingTaskId) return; 
+            editingTaskId = taskId;
+            renderStudyPlan();
+            
+            const input = document.getElementById(`edit-${taskId}`);
+            if (input) {
+                input.focus();
+                input.setSelectionRange(input.value.length, input.value.length);
+            }
+        }
+
+        function saveEdit(taskId) {
+            const input = document.getElementById(`edit-${taskId}`);
+            if (!input) return;
+            
+            const newText = input.value.trim();
+            if (!newText) {
+                showNotification('لا يمكن أن تكون المهمة فارغة!', 'warning');
+                return;
+            }
+            
+            const [day] = taskId.split('-');
+            const task = tasks[day].find(t => t.id === taskId);
+            
+            if (task) {
+                task.text = newText;
+                editingTaskId = null;
+                saveData();
+                renderStudyPlan();
+                showNotification('✏️ تم تحديث المهمة بنجاح!');
+            }
+        }
+
+        function cancelEdit() {
+            editingTaskId = null;
+            renderStudyPlan();
+        }
+
+        function deleteTask(taskId) {
+            const [day] = taskId.split('-');
+            if (isDayLocked(day)) return;
+
+            if (!confirm('هل أنت متأكد أنك تريد حذف هذه المهمة؟')) return;
+            
+            tasks[day] = tasks[day].filter(t => t.id !== taskId);
+            tasks[day].forEach((t, index) => t.id = `${day}-${index}`); 
+
+            saveData();
+            renderStudyPlan();
+            updateStats();
+            showNotification('🗑️ تم حذف المهمة');
+        }
+
+        function updateStats() {
+            let totalCompleted = 0;
+            let totalTasks = 0;
+            
+            Object.keys(tasks).forEach(day => {
+                tasks[day].forEach(task => {
+                    totalTasks++;
+                    if (task.completed) totalCompleted++;
+                });
+            });
+            
+            const progress = totalTasks > 0 ? Math.round((totalCompleted / totalTasks) * 100) : 0;
+            
+            document.getElementById('completedCount').textContent = totalCompleted;
+            document.getElementById('pendingCount').textContent = totalTasks - totalCompleted;
+            document.getElementById('progressPercent').textContent = progress;
+            document.getElementById('progressBar').style.width = progress + '%';
+            document.getElementById('progressBar').textContent = progress + '%';
+            checkAccountability(); 
+        }
+
+        function changeVerse() {
+            const verse = bibleVerses[Math.floor(Math.random() * bibleVerses.length)];
+            document.getElementById('dailyVerse').textContent = verse;
+        }
+
+        function changeMotivation() {
+            const message = motivations[Math.floor(Math.random() * motivations.length)];
+            document.getElementById('motivation').textContent = message;
+        }
+
+        function checkAccountability() {
+            const alerts = [];
+            let totalPending = 0;
+            let totalCompleted = 0;
+            
+            Object.keys(tasks).forEach(day => {
+                tasks[day].forEach(task => {
+                    if (task.completed) totalCompleted++;
+                    else totalPending++;
+                });
+            });
+            
+            if (totalPending > totalCompleted && totalCompleted > 0) {
+                alerts.push('📉 لديك مهام معلقة أكثر من المكتملة. ابقَ مركزًا!');
+            }
+            
+            if (totalCompleted === 0 && totalPending > 10) {
+                alerts.push('⚠️ لم تبدأ مهامك الأسبوعية بعد. ابدأ اليوم!');
+            }
+            
+            const alertPanel = document.getElementById('alertPanel');
+            const alertContent = document.getElementById('alertContent');
+            
+            if (alerts.length > 0) {
+                alertPanel.style.display = 'block';
+                alertContent.innerHTML = alerts.map(alert => `<p style="margin: 10px 0;">${alert}</p>`).join('');
+            } else {
+                alertPanel.style.display = 'none';
+            }
+        }
+
+        function showNotification(message, type = 'info') {
+            const notification = document.getElementById('notification');
+            notification.textContent = message;
+            notification.className = 'notification ' + (type === 'warning' ? 'warning' : '');
+            notification.style.display = 'block';
+            
+            setTimeout(() => {
+                notification.style.display = 'none';
+            }, 4000);
+        }
+
+        // --- Local Storage Management ---
+
+        function saveData() {
+            const dataToSave = {
+                tasks: tasks,
+                lastAction: lastAction
+            };
+            localStorage.setItem('studyTrackerData', JSON.stringify(dataToSave));
+        }
+
+        function loadData() {
+            const saved = localStorage.getItem('studyTrackerData');
+            if (saved) {
+                const savedData = JSON.parse(saved);
+                
+                const savedTasks = savedData.tasks;
+                Object.keys(savedTasks).forEach(day => {
+                    if (tasks[day]) {
+                        tasks[day] = savedTasks[day];
+                    }
+                });
+                
+                lastAction = savedData.lastAction || null;
+            }
+        }
+
+        // --- Event Listeners ---
+        
+        setInterval(checkAccountability, 30000);
+        
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' && editingTaskId) {
+                saveEdit(editingTaskId);
+            } else if (e.key === 'Escape' && editingTaskId) {
+                cancelEdit();
+            }
+        });
+    </script>
+</body>
+</html>
