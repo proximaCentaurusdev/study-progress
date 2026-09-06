@@ -8,6 +8,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <style>
 /* ============================================================
    DESIGN TOKENS
@@ -576,6 +577,51 @@ body.light .focus-stats{ border-left-color:var(--border); }
 }
 .add-task-btn:hover{ border-style:solid; color:var(--text); border-color:var(--violet); }
 
+/* Study history ------------------------------------------------------------------*/
+.history-card{ display:flex; flex-direction:column; }
+.history-intro{ color:var(--text-dim); font-size:.88rem; margin-top:-4px; margin-bottom:16px; }
+.history-toolbar{ display:flex; justify-content:flex-end; margin-bottom:16px; }
+.history-empty{
+  color:var(--text-faint); font-style:italic; font-size:.9rem;
+  padding:22px 10px; text-align:center;
+}
+.history-week{
+  border:1px solid var(--border);
+  border-radius:var(--radius-lg);
+  background:var(--surface-strong);
+  margin-bottom:14px;
+  overflow:hidden;
+  transition:border-color .25s var(--ease);
+}
+.history-week.is-current{ border-color:var(--gold); box-shadow:0 0 0 1px rgba(231,184,78,.2); }
+.history-week-header{
+  width:100%; display:flex; align-items:center; gap:14px; flex-wrap:wrap;
+  padding:16px 20px; background:transparent; border:none; color:var(--text); text-align:left;
+}
+.history-week-range{ font-family:var(--font-serif); font-weight:600; font-size:1.05rem; }
+.history-week-count{ color:var(--text-faint); font-size:.8rem; }
+.history-week-header .chevron{ margin-left:auto; }
+.history-week-header[aria-expanded="true"] .chevron{ transform:rotate(180deg); }
+.history-week-body{ padding:0 20px 20px; animation:expandDown .28s var(--ease); }
+.history-list{ list-style:none; display:flex; flex-direction:column; gap:8px; margin-bottom:16px; }
+.history-item{
+  display:flex; align-items:center; gap:12px; flex-wrap:wrap;
+  background:var(--surface);
+  border-left:3px solid var(--success);
+  border-radius:var(--radius-sm);
+  padding:11px 14px;
+  font-size:.86rem;
+}
+.history-time{ color:var(--text-faint); font-variant-numeric:tabular-nums; white-space:nowrap; }
+.history-subject-tag{
+  background:linear-gradient(135deg,var(--violet),var(--gold));
+  color:#2a1015; font-weight:700; font-size:.7rem;
+  padding:3px 10px; border-radius:var(--radius-pill); white-space:nowrap;
+}
+.history-day-tag{ color:var(--text-faint); font-size:.76rem; white-space:nowrap; }
+.history-text{ flex:1 1 100%; color:var(--text); }
+@media (min-width:640px){ .history-text{ flex:1 1 auto; order:1; } .history-day-tag{ margin-left:auto; order:2; } }
+
 /* Settings panel ---------------------------------------------------------------*/
 .settings-panel{ display:flex; flex-direction:column; gap:2px; }
 .settings-panel h2{ font-family:var(--font-serif); font-size:1.4rem; margin-bottom:14px; }
@@ -755,6 +801,16 @@ body.light .focus-stats{ border-left-color:var(--border); }
       <div id="studyPlan"></div>
     </section>
 
+    <section class="surface-card history-card" id="historyCard" aria-label="Study history">
+      <div class="card-head"><span class="card-icon">📜</span><h3>Study History</h3></div>
+      <div class="ornament-divider" aria-hidden="true"><span>✝</span></div>
+      <p class="history-intro">Every task you complete is logged here automatically — name, subject, date and time — grouped by week.</p>
+      <div class="history-toolbar">
+        <button class="btn primary" id="exportAllHistoryBtn">⬇️ Export All Weeks (PDF)</button>
+      </div>
+      <div id="historyWeeks"></div>
+    </section>
+
     <section class="surface-card settings-panel" id="settingsPanel" hidden aria-label="Settings">
       <h2>🕯️ Settings</h2>
       <div class="settings-row">
@@ -893,7 +949,8 @@ function buildDefaultState(){
     tasks: buildDefaultTasks(),
     lastAction: null,
     streak: { current: 0, best: 0, completedDates: [] },
-    theme: 'dark'
+    theme: 'dark',
+    history: []
   };
 }
 
@@ -907,6 +964,7 @@ let currentMotivationIndex = -1;
 let searchTerm = '';
 let activeFilter = 'all';
 const expandedDays = new Set();
+const expandedHistoryWeeks = new Set();
 let midnightTimer = null;
 let modalOnConfirm = null;
 
@@ -1030,6 +1088,105 @@ function recordCompletionToday(){
 }
 
 /* ============================================================
+   8b. STUDY HISTORY
+   ============================================================ */
+const subjectRules = [
+  [/math/i, 'Math'],
+  [/mecha/i, 'Mechanics'],
+  [/\bbio\b/i, 'Biology'],
+  [/chem/i, 'Chemistry'],
+  [/physic/i, 'Physics'],
+  [/french/i, 'French'],
+  [/arabic|hatkhmed|hosny/i, 'Arabic'],
+  [/english|vocab|novel/i, 'English'],
+  [/\bgeo\b/i, 'Geography'],
+  [/mo salah/i, 'MO Salah'],
+  [/coding|embedded/i, 'Coding'],
+  [/church|holy mass/i, 'Church'],
+  [/journal/i, 'Journaling'],
+  [/exam|question/i, 'Revision'],
+  [/break|rest|نام|out of home|day$/i, 'Break / Rest']
+];
+
+function inferSubject(text){
+  for (const [pattern, label] of subjectRules){
+    if (pattern.test(text)) return label;
+  }
+  return 'General Study';
+}
+
+function getWeekStart(date){
+  const d = new Date(date);
+  d.setHours(0,0,0,0);
+  const dow = d.getDay(); // 0=Sun ... 6=Sat
+  const diffFromSaturday = (dow + 1) % 7; // Saturday starts the plan week
+  d.setDate(d.getDate() - diffFromSaturday);
+  return d;
+}
+
+function getWeekKeyForDate(date){
+  return formatDateKey(getWeekStart(date));
+}
+
+function formatWeekLabel(weekKey){
+  const start = new Date(weekKey + 'T00:00:00');
+  const end = new Date(start);
+  end.setDate(start.getDate() + 6);
+  const startStr = start.toLocaleDateString('en-US', { month:'short', day:'numeric' });
+  const endStr = end.toLocaleDateString('en-US', { month:'short', day:'numeric', year:'numeric' });
+  return startStr + ' – ' + endStr;
+}
+
+function addHistoryEntry(task, day){
+  const now = new Date();
+  const weekKey = getWeekKeyForDate(now);
+  if (!Array.isArray(state.history)) state.history = [];
+  state.history.push({
+    id: task.id,
+    text: task.text,
+    subject: inferSubject(task.text),
+    day: day,
+    date: formatDateKey(now),
+    time: pad2(now.getHours()) + ':' + pad2(now.getMinutes()),
+    weekKey: weekKey
+  });
+  if (state.history.length > 3000){
+    state.history = state.history.slice(-3000);
+  }
+  expandedHistoryWeeks.add(weekKey);
+}
+
+function removeHistoryEntryForToday(id){
+  if (!Array.isArray(state.history)) { state.history = []; return; }
+  const todayKey = formatDateKey(new Date());
+  for (let i = state.history.length - 1; i >= 0; i--){
+    if (state.history[i].id === id && state.history[i].date === todayKey){
+      state.history.splice(i, 1);
+      break;
+    }
+  }
+}
+
+function getHistoryByWeek(){
+  const groups = {};
+  (state.history || []).forEach(entry=>{
+    if (!groups[entry.weekKey]) groups[entry.weekKey] = [];
+    groups[entry.weekKey].push(entry);
+  });
+  Object.values(groups).forEach(list=>{
+    list.sort((a,b)=>{
+      const aKey = a.date + ' ' + a.time, bKey = b.date + ' ' + b.time;
+      return aKey < bKey ? -1 : (aKey > bKey ? 1 : 0);
+    });
+  });
+  return groups;
+}
+
+function getSortedWeekKeys(groups){
+  return Object.keys(groups).sort((a,b)=> a < b ? 1 : (a > b ? -1 : 0));
+}
+
+/* ============================================================
    10. LOCAL STORAGE
    ============================================================ */
 function shapeLooksValid(data){
@@ -1043,6 +1200,7 @@ function shapeLooksValid(data){
       }
     }
   }
+  if (data.history !== undefined && !Array.isArray(data.history)) return false;
   return true;
 }
 
@@ -1079,6 +1237,7 @@ function loadData(){
           ? parsed.streak
           : { current:0, best:0, completedDates:[] };
         state.theme = parsed.theme === 'light' ? 'light' : 'dark';
+        state.history = Array.isArray(parsed.history) ? parsed.history : [];
         recomputeStreak();
         return;
       }
@@ -1106,7 +1265,8 @@ function saveData(){
       tasks: state.tasks,
       lastAction: state.lastAction,
       streak: state.streak,
-      theme: state.theme
+      theme: state.theme,
+      history: state.history || []
     };
     localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
   } catch(e){
@@ -1125,7 +1285,8 @@ function exportData(){
     tasks: state.tasks,
     lastAction: state.lastAction,
     streak: state.streak,
-    theme: state.theme
+    theme: state.theme,
+    history: state.history || []
   };
   const blob = new Blob([JSON.stringify(payload, null, 2)], { type:'application/json' });
   const url = URL.createObjectURL(blob);
@@ -1153,6 +1314,7 @@ function importDataFromFile(file){
       state.streak = parsed.streak && Array.isArray(parsed.streak.completedDates)
         ? parsed.streak : { current:0, best:0, completedDates:[] };
       if (parsed.theme === 'light' || parsed.theme === 'dark') state.theme = parsed.theme;
+      state.history = Array.isArray(parsed.history) ? parsed.history : [];
       recomputeStreak();
       applyTheme();
       saveData();
@@ -1253,7 +1415,12 @@ function toggleComplete(id){
 
   state.lastAction = { id, wasCompleted: task.completed };
   task.completed = !task.completed;
-  if (task.completed) recordCompletionToday();
+  if (task.completed){
+    recordCompletionToday();
+    addHistoryEntry(task, day);
+  } else {
+    removeHistoryEntryForToday(id);
+  }
 
   saveData();
   renderAll();
@@ -1272,6 +1439,11 @@ function revertLastAction(){
   const found = findTask(id);
   if (found){
     found.task.completed = wasCompleted;
+    if (wasCompleted){
+      addHistoryEntry(found.task, found.day);
+    } else {
+      removeHistoryEntryForToday(id);
+    }
     state.lastAction = null;
     saveData();
     renderAll();
@@ -1552,12 +1724,54 @@ function renderStudyPlan(){
   }).join('');
 }
 
+function renderHistory(){
+  const container = $('#historyWeeks');
+  if (!container) return;
+  const groups = getHistoryByWeek();
+  const weekKeys = getSortedWeekKeys(groups);
+  const currentWeekKey = getWeekKeyForDate(new Date());
+
+  if (weekKeys.length === 0){
+    container.innerHTML = '<p class="history-empty">✝ No completed tasks yet. Finish a task above and it will appear here, organized by week.</p>';
+    return;
+  }
+
+  container.innerHTML = weekKeys.map(weekKey=>{
+    const entries = groups[weekKey];
+    const expanded = expandedHistoryWeeks.has(weekKey);
+    const label = formatWeekLabel(weekKey);
+    const isCurrent = weekKey === currentWeekKey;
+
+    const itemsHtml = entries.map(e=>
+      '<li class="history-item">' +
+        '<span class="history-time">' + e.date + ' • ' + e.time + '</span>' +
+        '<span class="history-subject-tag">' + escapeHtml(e.subject) + '</span>' +
+        '<span class="history-text">' + escapeHtml(e.text) + '</span>' +
+        '<span class="history-day-tag">' + e.day + '</span>' +
+      '</li>'
+    ).join('');
+
+    return '<div class="history-week' + (isCurrent ? ' is-current' : '') + '">' +
+      '<button class="history-week-header" data-week="' + weekKey + '" aria-expanded="' + expanded + '">' +
+        '<span class="history-week-range">' + label + (isCurrent ? ' (this week)' : '') + '</span>' +
+        '<span class="history-week-count">' + entries.length + ' task' + (entries.length === 1 ? '' : 's') + ' completed</span>' +
+        '<span class="chevron">▾</span>' +
+      '</button>' +
+      '<div class="history-week-body" ' + (expanded ? '' : 'hidden') + '>' +
+        '<ul class="history-list">' + itemsHtml + '</ul>' +
+        '<button class="btn ghost" data-export-week="' + weekKey + '">⬇️ Export This Week (PDF)</button>' +
+      '</div>' +
+    '</div>';
+  }).join('');
+}
+
 function renderAll(){
   renderFocus();
   renderStats();
   renderCalendarStrip();
   renderAccountability();
   renderStudyPlan();
+  renderHistory();
   const undoBtn = $('#undoBtn');
   if (undoBtn) undoBtn.disabled = !state.lastAction;
   $('#footerYear').textContent = String(new Date().getFullYear());
@@ -1638,6 +1852,132 @@ async function shareVerse(){
 }
 
 /* ============================================================
+   Study History — PDF export
+   ============================================================ */
+function jsPdfReady(){
+  return !!(window.jspdf && window.jspdf.jsPDF);
+}
+
+function exportWeekPDF(weekKey){
+  const groups = getHistoryByWeek();
+  const entries = groups[weekKey] || [];
+  if (!entries.length){
+    showToast('There\'s nothing completed in this week yet to export.', 'warning');
+    return;
+  }
+  const sub = { };
+  sub[weekKey] = entries;
+  buildHistoryPDF(sub, [weekKey], formatWeekLabel(weekKey), weekKey);
+}
+
+function exportAllHistoryPDF(){
+  const groups = getHistoryByWeek();
+  const weekKeys = getSortedWeekKeys(groups);
+  if (!weekKeys.length){
+    showToast('There\'s no study history yet to export.', 'warning');
+    return;
+  }
+  const oldestLabel = formatWeekLabel(weekKeys[weekKeys.length - 1]).split(' – ')[0];
+  const newestLabel = formatWeekLabel(weekKeys[0]).split(' – ')[1];
+  const rangeLabel = weekKeys.length > 1 ? (oldestLabel + ' – ' + newestLabel) : formatWeekLabel(weekKeys[0]);
+  buildHistoryPDF(groups, weekKeys, 'All Weeks (' + rangeLabel + ')', 'all-weeks');
+}
+
+function buildHistoryPDF(groups, weekKeys, rangeLabel, fileSuffix){
+  if (!jsPdfReady()){
+    showToast('⚠️ The PDF library hasn\'t finished loading — please try again in a moment.', 'error');
+    return;
+  }
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF();
+  const pageWidth = doc.internal.pageSize.getWidth();
+  const pageHeight = doc.internal.pageSize.getHeight();
+  const marginX = 16;
+  let y = 16;
+
+  function drawHeader(){
+    doc.setFillColor(122, 35, 64);
+    doc.rect(0, 0, pageWidth, 30, 'F');
+    doc.setTextColor(232, 193, 101);
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(15);
+    doc.text('✝ Christian Study Tracker', pageWidth / 2, 13, { align:'center' });
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(10);
+    doc.setTextColor(255, 255, 255);
+    doc.text('Study History — ' + rangeLabel, pageWidth / 2, 22, { align:'center' });
+    y = 40;
+  }
+
+  function ensureSpace(needed){
+    if (y + needed > pageHeight - 16){
+      doc.addPage();
+      y = 16;
+    }
+  }
+
+  drawHeader();
+
+  const sortedKeys = weekKeys.slice().sort((a,b)=> a < b ? 1 : (a > b ? -1 : 0));
+  let totalCompleted = 0;
+
+  sortedKeys.forEach(weekKey=>{
+    const entries = groups[weekKey];
+    if (!entries || !entries.length) return;
+    totalCompleted += entries.length;
+
+    ensureSpace(18);
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(12.5);
+    doc.setTextColor(122, 35, 64);
+    doc.text('Week of ' + formatWeekLabel(weekKey), marginX, y);
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(9);
+    doc.setTextColor(150, 120, 60);
+    doc.text(entries.length + ' task' + (entries.length === 1 ? '' : 's') + ' completed', pageWidth - marginX, y, { align:'right' });
+    y += 4;
+    doc.setDrawColor(201, 154, 63);
+    doc.setLineWidth(0.5);
+    doc.line(marginX, y, pageWidth - marginX, y);
+    y += 8;
+
+    entries.forEach(e=>{
+      ensureSpace(16);
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(9);
+      doc.setTextColor(45, 30, 20);
+      const meta = e.date + '  ' + e.time + '   [' + e.day + ']';
+      doc.text(meta, marginX, y);
+      doc.setFont('helvetica', 'normal');
+      doc.setTextColor(122, 35, 64);
+      doc.text('(' + e.subject + ')', marginX + doc.getTextWidth(meta) + 4, y);
+      y += 5.5;
+
+      doc.setTextColor(70, 60, 50);
+      doc.setFontSize(9.5);
+      const lines = doc.splitTextToSize(e.text, pageWidth - marginX * 2 - 4);
+      lines.forEach(line=>{
+        ensureSpace(6);
+        doc.text(line, marginX + 4, y);
+        y += 5;
+      });
+      y += 2.5;
+    });
+
+    y += 5;
+  });
+
+  ensureSpace(12);
+  doc.setFont('helvetica', 'italic');
+  doc.setFontSize(8.5);
+  doc.setTextColor(120, 110, 95);
+  doc.text('Total tasks completed: ' + totalCompleted + '  —  Study with discipline. Grow in faith. ✝', marginX, y);
+
+  doc.save('study-history-' + (fileSuffix || 'export') + '.pdf');
+  showToast('⬇️ Study history PDF exported.', 'success');
+}
+
+/* ============================================================
    Reset
    ============================================================ */
 function requestReset(){
@@ -1657,6 +1997,7 @@ function performReset(){
   editingTaskId = null;
   expandedDays.clear();
   expandedDays.add(getTodayName());
+  expandedHistoryWeeks.clear();
   saveData();
   renderAll();
   showToast('🔄 Study Tracker has been reset.', 'info');
@@ -1753,6 +2094,22 @@ function setupEventHandlers(){
   $('#modalOverlay').addEventListener('click', (e)=>{
     if (e.target === $('#modalOverlay')) closeModal();
   });
+
+  $('#exportAllHistoryBtn').addEventListener('click', exportAllHistoryPDF);
+
+  $('#historyWeeks').addEventListener('click', (e)=>{
+    const header = e.target.closest('.history-week-header');
+    if (header){
+      const week = header.dataset.week;
+      if (expandedHistoryWeeks.has(week)) expandedHistoryWeeks.delete(week); else expandedHistoryWeeks.add(week);
+      renderHistory();
+      return;
+    }
+    const exportBtn = e.target.closest('[data-export-week]');
+    if (exportBtn){
+      exportWeekPDF(exportBtn.dataset.exportWeek);
+    }
+  });
 }
 
 /* ============================================================
@@ -1764,6 +2121,7 @@ document.addEventListener('DOMContentLoaded', function(){
   setupEventHandlers();
 
   expandedDays.add(getTodayName());
+  expandedHistoryWeeks.add(getWeekKeyForDate(new Date()));
 
   updateClock();
   setInterval(updateClock, 1000);
