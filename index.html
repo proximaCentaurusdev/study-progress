@@ -1,853 +1,1707 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="icon" type="image/png" href="study.png">
-    <title>Christian Study Tracker</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="icon" type="image/png" href="study.png">
+<title>Christian Study Tracker</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+/* ============================================================
+   DESIGN TOKENS
+   ============================================================ */
+:root{
+  --bg:#08090f;
+  --bg-soft:#0f1119;
+  --surface:rgba(255,255,255,.035);
+  --surface-strong:rgba(255,255,255,.065);
+  --surface-solid:#14151f;
+  --border:rgba(160,140,255,.16);
+  --border-strong:rgba(160,140,255,.34);
+  --violet:#8b6bff;
+  --violet-dim:#4f3f99;
+  --violet-ink:#c9bbff;
+  --cyan:#39d3e0;
+  --gold:#e7b84e;
+  --gold-dim:#4a3d24;
+  --text:#eef0fb;
+  --text-dim:#9ba0bd;
+  --text-faint:#666c8a;
+  --success:#39d398;
+  --success-ink:#0b3a2c;
+  --warning:#f0b74a;
+  --warning-ink:#402c05;
+  --danger:#f2637f;
+  --danger-ink:#3a0f1a;
+  --radius-xl:30px;
+  --radius-lg:22px;
+  --radius-md:16px;
+  --radius-sm:11px;
+  --radius-pill:999px;
+  --shadow-soft:0 18px 50px -22px rgba(0,0,0,.6);
+  --shadow-glow:0 0 0 1px var(--border), 0 20px 60px -24px rgba(139,107,255,.45);
+  --font-serif:'Fraunces','Iowan Old Style',Georgia,serif;
+  --font-sans:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+  --ease:cubic-bezier(.4,0,.2,1);
+  --dur:.35s;
+  color-scheme: dark;
+}
 
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: #0a0a0f;
-            color: #fff;
-            min-height: 100vh;
-            overflow-x: hidden;
-        }
+body.light{
+  --bg:#f4f2fb;
+  --bg-soft:#ffffff;
+  --surface:rgba(30,20,60,.035);
+  --surface-strong:rgba(30,20,60,.06);
+  --surface-solid:#ffffff;
+  --border:rgba(90,60,180,.14);
+  --border-strong:rgba(90,60,180,.3);
+  --violet:#6d3fd6;
+  --violet-dim:#e3d9fb;
+  --violet-ink:#5a35b0;
+  --cyan:#0891a8;
+  --gold:#a9791b;
+  --gold-dim:#f6ecd2;
+  --text:#181a26;
+  --text-dim:#54587a;
+  --text-faint:#8b8fa8;
+  --success:#0f9d6c;
+  --success-ink:#e3faf0;
+  --warning:#a3670c;
+  --warning-ink:#fdf1dc;
+  --danger:#c92f52;
+  --danger-ink:#fce9ee;
+  --shadow-soft:0 18px 40px -24px rgba(90,60,180,.25);
+  --shadow-glow:0 0 0 1px var(--border), 0 20px 50px -28px rgba(90,60,180,.3);
+  color-scheme: light;
+}
 
-        .container {
-            max-width: 1400px;
-            margin: 0 auto;
-            padding: 20px;
-        }
+*{margin:0;padding:0;box-sizing:border-box;}
+html{-webkit-text-size-adjust:100%;}
+body{
+  font-family:var(--font-sans);
+  background:var(--bg);
+  color:var(--text);
+  min-height:100vh;
+  overflow-x:hidden;
+  transition:background var(--dur) var(--ease), color var(--dur) var(--ease);
+  line-height:1.5;
+  -webkit-font-smoothing:antialiased;
+}
+button, input{font-family:inherit;}
+button{cursor:pointer;}
+img,svg{display:block;}
+a{color:inherit;}
 
-        .header {
-            text-align: center;
-            padding: 40px 20px;
-            background: linear-gradient(135deg, #8a2be2, #00bfff);
-            border-radius: 20px;
-            margin-bottom: 30px;
-            box-shadow: 0 0 30px rgba(138, 43, 226, 0.5);
-            animation: glow 2s ease-in-out infinite alternate;
-        }
+/* Focus visibility for accessibility */
+:focus-visible{
+  outline:2px solid var(--cyan);
+  outline-offset:3px;
+  border-radius:6px;
+}
 
-        @keyframes glow {
-            from { box-shadow: 0 0 20px rgba(138, 43, 226, 0.5); }
-            to { box-shadow: 0 0 40px rgba(0, 191, 255, 0.8); }
-        }
+/* Background decoration -------------------------------------------------*/
+.bg-decor{
+  position:fixed; inset:0; z-index:-1; overflow:hidden; pointer-events:none;
+}
+.bg-decor::before,
+.bg-decor::after{
+  content:'';
+  position:absolute;
+  width:60vmax; height:60vmax;
+  border-radius:50%;
+  filter:blur(90px);
+  opacity:.28;
+  animation:driftBlob 50s var(--ease) infinite alternate;
+}
+.bg-decor::before{
+  background:radial-gradient(circle, var(--violet), transparent 65%);
+  top:-20vmax; left:-16vmax;
+}
+.bg-decor::after{
+  background:radial-gradient(circle, var(--cyan), transparent 65%);
+  bottom:-24vmax; right:-18vmax;
+  animation-delay:-25s;
+}
+@keyframes driftBlob{
+  from{ transform:translate(0,0) scale(1); }
+  to{ transform:translate(4%,6%) scale(1.08); }
+}
+@media (prefers-reduced-motion:reduce){
+  .bg-decor::before, .bg-decor::after{ animation:none; }
+}
 
-        .header h1 {
-            font-size: 2.5em;
-            margin-bottom: 10px;
-            text-shadow: 0 0 20px rgba(255, 255, 255, 0.5);
-        }
+/* App shell ---------------------------------------------------------------*/
+.app{
+  max-width:1180px;
+  margin:0 auto;
+  padding:22px 20px 60px;
+  opacity:0;
+  transform:translateY(10px);
+}
+.app.is-ready{
+  opacity:1;
+  transform:none;
+  transition:opacity .6s var(--ease), transform .6s var(--ease);
+}
 
-        .dashboard {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
-            gap: 25px;
-            margin-bottom: 30px;
-            /* تم التأكد من إزالة خاصية الثبات (sticky) */
-        }
+main{display:flex; flex-direction:column; gap:22px;}
 
-        .card {
-            background: rgba(20, 20, 30, 0.8);
-            border: 2px solid #8a2be2;
-            border-radius: 15px;
-            padding: 25px;
-            backdrop-filter: blur(10px);
-            transition: all 0.3s ease;
-        }
+/* ============================================================
+   HERO
+   ============================================================ */
+.hero{
+  position:relative;
+  overflow:hidden;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:28px;
+  background:linear-gradient(155deg, rgba(139,107,255,.22), rgba(57,211,224,.10) 60%, transparent);
+  border:1px solid var(--border);
+  border-radius:var(--radius-xl);
+  padding:34px 36px;
+  margin-bottom:4px;
+  box-shadow:var(--shadow-glow);
+}
+.cross-motif{
+  position:absolute;
+  right:-10px; top:50%; transform:translateY(-50%);
+  width:180px; height:180px;
+  opacity:.07;
+  stroke:var(--text);
+  z-index:0;
+}
+body.light .cross-motif{ opacity:.05; }
+.hero-main, .hero-side{ position:relative; z-index:1; }
+.hero-eyebrow{
+  font-size:.82rem;
+  letter-spacing:.02em;
+  color:var(--violet-ink);
+  font-weight:600;
+  margin-bottom:6px;
+}
+.hero-title{
+  font-family:var(--font-serif);
+  font-weight:600;
+  font-size:clamp(1.7rem, 3.4vw, 2.5rem);
+  line-height:1.1;
+}
+.hero-sub{
+  color:var(--text-dim);
+  margin-top:8px;
+  font-size:.98rem;
+  font-style:italic;
+  font-family:var(--font-serif);
+}
+.hero-meta{
+  margin-top:16px;
+  display:flex;
+  align-items:center;
+  gap:10px;
+  color:var(--text-dim);
+  font-size:.9rem;
+  font-variant-numeric:tabular-nums;
+}
+.hero-meta .dot{ opacity:.5; }
+#heroClock{ color:var(--text); font-weight:600; letter-spacing:.02em; }
 
-        .card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 10px 30px rgba(138, 43, 226, 0.6);
-            border-color: #00bfff;
-        }
+.hero-side{
+  display:flex;
+  align-items:center;
+  gap:22px;
+  flex-shrink:0;
+}
+.ring-wrap{ position:relative; width:108px; height:108px; }
+.ring{ width:100%; height:100%; transform:rotate(-90deg); }
+.ring-track{ fill:none; stroke:var(--surface-strong); stroke-width:9; }
+.ring-fill{
+  fill:none; stroke:url(#ringGrad); stroke-width:9; stroke-linecap:round;
+  transition:stroke-dashoffset .7s var(--ease);
+}
+.ring-label{
+  position:absolute; inset:0;
+  display:flex; flex-direction:column; align-items:center; justify-content:center;
+  text-align:center;
+}
+.ring-label strong{ font-size:1.15rem; font-family:var(--font-serif); }
+.ring-label span{ font-size:.62rem; color:var(--text-faint); text-transform:none; }
 
-        .card h2 {
-            color: #00bfff;
-            margin-bottom: 20px;
-            font-size: 1.5em;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
+.hero-actions{ display:flex; flex-direction:column; gap:10px; }
+.icon-btn{
+  width:42px; height:42px;
+  border-radius:var(--radius-pill);
+  border:1px solid var(--border);
+  background:var(--surface);
+  color:var(--text);
+  font-size:1.05rem;
+  display:flex; align-items:center; justify-content:center;
+  transition:transform .2s var(--ease), background .2s var(--ease), border-color .2s var(--ease);
+}
+.icon-btn:hover{ transform:translateY(-2px); border-color:var(--border-strong); background:var(--surface-strong); }
 
-        .progress-bar {
-            width: 100%;
-            height: 30px;
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 15px;
-            overflow: hidden;
-            margin: 20px 0;
-            border: 1px solid #8a2be2;
-        }
+@media (max-width:760px){
+  .hero{ flex-direction:column; align-items:flex-start; padding:26px 22px; }
+  .hero-side{ width:100%; justify-content:space-between; }
+  .cross-motif{ display:none; }
+}
 
-        .progress-fill {
-            height: 100%;
-            background: linear-gradient(90deg, #8a2be2, #00bfff);
-            transition: width 0.5s ease;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: bold;
-            box-shadow: 0 0 20px rgba(0, 191, 255, 0.8);
-        }
+/* ============================================================
+   CARD PRIMITIVES
+   ============================================================ */
+.surface-card{
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:var(--radius-lg);
+  padding:26px;
+  backdrop-filter:blur(14px);
+  box-shadow:var(--shadow-soft);
+}
 
-        .day-section {
-            background: rgba(138, 43, 226, 0.15);
-            border: 2px solid #8a2be2;
-            border-radius: 12px;
-            padding: 20px;
-            margin: 15px 0;
-            transition: opacity 0.3s ease;
-        }
-        
-        /* Locked Day Style */
-        .day-section.locked {
-            opacity: 0.4;
-            pointer-events: none;
-            user-select: none;
-            border-color: #ff3366;
-            background: rgba(255, 51, 102, 0.1);
-        }
+/* Today's focus ------------------------------------------------------------*/
+.focus-card{
+  display:grid;
+  grid-template-columns:1.1fr 1fr;
+  gap:28px;
+  align-items:center;
+}
+.focus-eyebrow{
+  font-size:.78rem; font-weight:700; letter-spacing:.02em;
+  color:var(--gold);
+}
+.focus-head h2{
+  font-family:var(--font-serif); font-weight:600;
+  font-size:1.7rem; margin-top:4px;
+}
+.focus-progress{ display:flex; align-items:center; gap:14px; margin-top:18px; }
+.focus-bar{
+  flex:1; height:12px; border-radius:var(--radius-pill);
+  background:var(--surface-strong); overflow:hidden; border:1px solid var(--border);
+}
+.focus-bar-fill{
+  height:100%;
+  background:linear-gradient(90deg, var(--violet), var(--cyan));
+  border-radius:var(--radius-pill);
+  transition:width .6s var(--ease);
+}
+.focus-percent{ font-weight:700; min-width:3ch; font-variant-numeric:tabular-nums; }
+.focus-message{
+  margin-top:16px; font-size:1.02rem; font-family:var(--font-serif); font-style:italic;
+  color:var(--text-dim);
+}
+.focus-stats{
+  display:flex; justify-content:space-around; text-align:center;
+  border-left:1px solid var(--border); padding-left:26px;
+}
+body.light .focus-stats{ border-left-color:var(--border); }
+.focus-stats div strong{ display:block; font-size:1.9rem; font-family:var(--font-serif); }
+.focus-stats div span{ font-size:.78rem; color:var(--text-faint); }
+@media (max-width:760px){
+  .focus-card{ grid-template-columns:1fr; }
+  .focus-stats{ border-left:none; border-top:1px solid var(--border); padding-left:0; padding-top:18px; }
+}
 
-        .day-header {
-            font-size: 1.3em;
-            color: #00bfff;
-            font-weight: bold;
-            margin-bottom: 15px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        
-        .day-section.locked .day-header {
-            color: #ff3366;
-        }
-        .day-section.locked .day-header::after {
-            content: ' 🔒 مقفل';
-            font-size: 0.8em;
-            color: #ff3366;
-        }
+/* Stats grid ----------------------------------------------------------------*/
+.stats-grid{
+  display:grid;
+  grid-template-columns:repeat(5, 1fr);
+  gap:16px;
+}
+.stat-card{
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:var(--radius-md);
+  padding:18px;
+  text-align:center;
+  transition:transform .25s var(--ease), border-color .25s var(--ease);
+}
+.stat-card:hover{ transform:translateY(-3px); border-color:var(--border-strong); }
+.stat-icon{ font-size:1.2rem; margin-bottom:6px; }
+.stat-number{ font-size:1.7rem; font-family:var(--font-serif); font-weight:600; }
+.stat-label{ font-size:.76rem; color:var(--text-faint); margin-top:2px; }
+@media (max-width:900px){ .stats-grid{ grid-template-columns:repeat(3,1fr); } }
+@media (max-width:520px){ .stats-grid{ grid-template-columns:repeat(2,1fr); } }
 
+/* Calendar strip -------------------------------------------------------------*/
+.calendar-strip{
+  display:grid;
+  grid-template-columns:repeat(7,1fr);
+  gap:10px;
+}
+.cal-day{
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:var(--radius-md);
+  padding:14px 8px;
+  display:flex; flex-direction:column; align-items:center; gap:4px;
+  color:var(--text);
+  transition:transform .2s var(--ease), border-color .2s var(--ease), background .2s var(--ease);
+}
+.cal-day:not(:disabled):hover{ transform:translateY(-3px); border-color:var(--border-strong); }
+.cal-label{ font-size:.72rem; font-weight:700; letter-spacing:.04em; color:var(--text-faint); }
+.cal-percent{ font-family:var(--font-serif); font-size:1.15rem; }
+.cal-count{ font-size:.68rem; color:var(--text-faint); }
+.cal-day.today{ border-color:var(--gold); background:linear-gradient(160deg, var(--gold-dim), var(--surface)); }
+.cal-day.today .cal-percent{ color:var(--gold); }
+.cal-day.st-done{ border-color:var(--success); }
+.cal-day.st-done .cal-percent{ color:var(--success); }
+.cal-day.st-progress .cal-percent{ color:var(--cyan); }
+.cal-day.locked{ opacity:.45; }
+.cal-day.locked .cal-percent{ color:var(--danger); }
+@media (max-width:700px){
+  .calendar-strip{ grid-template-columns:repeat(7,minmax(64px,1fr)); overflow-x:auto; padding-bottom:4px; }
+}
 
-        .task-item {
-            background: rgba(0, 191, 255, 0.1);
-            border-left: 4px solid #00bfff;
-            padding: 15px;
-            margin: 10px 0;
-            border-radius: 8px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            transition: all 0.3s ease;
-            position: relative;
-        }
+/* Verse & motivation ----------------------------------------------------------*/
+.dual-grid{ display:grid; grid-template-columns:1fr 1fr; gap:20px; }
+@media (max-width:820px){ .dual-grid{ grid-template-columns:1fr; } }
+.card-head{ display:flex; align-items:center; gap:10px; margin-bottom:16px; }
+.card-icon{ font-size:1.3rem; }
+.card-head h3{ font-family:var(--font-serif); font-size:1.15rem; font-weight:600; }
+.verse-text{
+  direction:rtl; text-align:center; font-size:1.15rem; line-height:1.9;
+  font-family:'Traditional Arabic','Fraunces',serif;
+  min-height:3.6em;
+  transition:opacity .3s var(--ease);
+}
+.verse-ref{
+  direction:rtl; text-align:center; color:var(--gold); font-size:.88rem; margin-top:10px;
+  transition:opacity .3s var(--ease);
+}
+.motivation-text{
+  direction:rtl; text-align:center; font-size:1.25rem; font-family:'Traditional Arabic','Fraunces',serif;
+  min-height:2.6em; color:var(--violet-ink);
+  transition:opacity .3s var(--ease);
+}
+.fade-swap{ opacity:0 !important; }
+.card-actions{ display:flex; gap:10px; margin-top:18px; flex-wrap:wrap; justify-content:center; }
+.motivation-card{ border-color:rgba(231,184,78,.25); }
+.motivation-card .card-icon{ color:var(--gold); }
 
-        .task-item:hover {
-            background: rgba(0, 191, 255, 0.2);
-            transform: translateX(5px);
-        }
+/* Buttons ----------------------------------------------------------------------*/
+.btn{
+  border:1px solid var(--border-strong);
+  background:var(--surface-strong);
+  color:var(--text);
+  padding:10px 18px;
+  border-radius:var(--radius-pill);
+  font-size:.86rem;
+  font-weight:600;
+  transition:transform .2s var(--ease), box-shadow .2s var(--ease), background .2s var(--ease);
+}
+.btn:hover{ transform:translateY(-1px); box-shadow:0 8px 22px -12px rgba(139,107,255,.5); }
+.btn.primary{ background:linear-gradient(135deg, var(--violet), var(--cyan)); border-color:transparent; color:#0b0c14; }
+.btn.ghost{ background:transparent; }
+.btn.danger{ background:var(--danger); border-color:transparent; color:#fff; }
+.btn:disabled{ opacity:.4; cursor:not-allowed; transform:none; box-shadow:none; }
 
-        .task-item.completed {
-            border-left-color: #00ff88;
-            opacity: 0.7;
-            text-decoration: line-through;
-        }
+/* Accountability -----------------------------------------------------------------*/
+.accountability-card{ display:flex; align-items:center; gap:18px; }
+.accountability-icon{ font-size:1.9rem; }
+.accountability-title{ font-family:var(--font-serif); font-size:1.15rem; font-weight:600; }
+.accountability-msg{ color:var(--text-dim); font-size:.92rem; margin-top:2px; }
+.accountability-card.status-green{ border-color:rgba(57,211,152,.35); }
+.accountability-card.status-yellow{ border-color:rgba(240,183,74,.4); }
+.accountability-card.status-red{ border-color:rgba(242,99,127,.4); }
 
-        .task-item.editing {
-            background: rgba(138, 43, 226, 0.2);
-            border-left-color: #8a2be2;
-        }
+/* Toolbar ------------------------------------------------------------------------*/
+.toolbar{ display:flex; gap:14px; flex-wrap:wrap; align-items:center; justify-content:space-between; }
+.search-wrap{ flex:1; min-width:220px; }
+.search-wrap input{
+  width:100%; padding:12px 16px; border-radius:var(--radius-pill);
+  border:1px solid var(--border); background:var(--surface); color:var(--text); font-size:.92rem;
+}
+.filter-group{ display:flex; gap:8px; flex-wrap:wrap; }
+.filter-btn{
+  padding:9px 16px; border-radius:var(--radius-pill); border:1px solid var(--border);
+  background:var(--surface); color:var(--text-dim); font-size:.84rem; font-weight:600;
+  transition:all .2s var(--ease);
+}
+.filter-btn.active{ background:linear-gradient(135deg,var(--violet),var(--cyan)); color:#0b0c14; border-color:transparent; }
 
-        .task-text {
-            flex: 1;
-            padding: 5px;
-            border-radius: 5px;
-        }
+/* Plan section ----------------------------------------------------------------*/
+.section-heading{ margin-bottom:16px; }
+.section-heading h2{ font-family:var(--font-serif); font-size:1.5rem; font-weight:600; }
+.section-heading p{ color:var(--text-faint); font-size:.88rem; margin-top:4px; }
 
-        .task-edit-input {
-            flex: 1;
-            background: rgba(255, 255, 255, 0.1);
-            border: 2px solid #00bfff;
-            color: #fff;
-            padding: 10px;
-            border-radius: 8px;
-            font-size: 1em;
-            outline: none;
-        }
+.day-card{
+  border:1px solid var(--border);
+  border-radius:var(--radius-lg);
+  background:var(--surface);
+  margin-bottom:14px;
+  overflow:hidden;
+  transition:border-color .25s var(--ease), opacity .25s var(--ease);
+}
+.day-card.is-today{ border-color:var(--gold); box-shadow:0 0 0 1px rgba(231,184,78,.25); }
+.day-card.locked{ opacity:.55; }
+.day-header{
+  width:100%; display:flex; align-items:center; gap:14px;
+  padding:18px 22px; background:transparent; border:none; color:var(--text); text-align:left;
+}
+.day-name{ font-family:var(--font-serif); font-size:1.15rem; font-weight:600; min-width:96px; }
+.today-badge{
+  font-size:.68rem; font-weight:700; letter-spacing:.03em; color:#241a02;
+  background:var(--gold); padding:3px 9px; border-radius:var(--radius-pill);
+}
+.lock-badge{ font-size:.72rem; color:var(--danger); font-weight:600; }
+.day-progress-text{ font-size:.82rem; color:var(--text-faint); margin-left:auto; }
+.day-progress-bar{
+  width:110px; height:8px; border-radius:var(--radius-pill); background:var(--surface-strong);
+  overflow:hidden; border:1px solid var(--border);
+}
+.day-progress-fill{ height:100%; background:linear-gradient(90deg,var(--violet),var(--cyan)); transition:width .5s var(--ease); }
+.chevron{ transition:transform .3s var(--ease); color:var(--text-faint); }
+.day-header[aria-expanded="true"] .chevron{ transform:rotate(180deg); }
 
-        .btn {
-            background: linear-gradient(135deg, #8a2be2, #00bfff);
-            color: #fff;
-            border: none;
-            padding: 8px 15px;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 0.9em;
-            transition: all 0.3s ease;
-            box-shadow: 0 4px 15px rgba(138, 43, 226, 0.4);
-        }
+.day-body{
+  padding:0 22px 20px;
+  animation:expandDown .28s var(--ease);
+}
+@keyframes expandDown{ from{ opacity:0; transform:translateY(-6px);} to{ opacity:1; transform:none; } }
 
-        .btn:hover {
-            transform: scale(1.05);
-            box-shadow: 0 6px 25px rgba(0, 191, 255, 0.6);
-        }
+.locked-note{ font-size:.85rem; color:var(--text-faint); margin-bottom:12px; font-style:italic; }
+.task-list{ list-style:none; display:flex; flex-direction:column; gap:8px; }
+.empty-note{ color:var(--text-faint); font-size:.86rem; padding:10px 0; font-style:italic; }
 
-        .btn-small {
-            padding: 6px 12px;
-            font-size: 0.85em;
-        }
+.task-item{
+  display:flex; align-items:center; gap:12px;
+  background:var(--surface-strong);
+  border-left:3px solid var(--cyan);
+  border-radius:var(--radius-sm);
+  padding:12px 14px;
+  transition:background .25s var(--ease), opacity .3s var(--ease), transform .2s var(--ease);
+}
+.task-item.completed{ border-left-color:var(--success); }
+.task-item.completed .task-text{ text-decoration:line-through; color:var(--text-faint); }
+.task-item:hover{ transform:translateX(3px); }
 
-        .btn-danger {
-            background: #ff3366;
-        }
+.task-check{ position:relative; display:flex; cursor:pointer; }
+.task-check input{ position:absolute; opacity:0; width:22px; height:22px; cursor:pointer; }
+.checkmark{
+  width:22px; height:22px; border-radius:7px; border:2px solid var(--border-strong);
+  display:flex; align-items:center; justify-content:center; flex-shrink:0;
+  transition:background .2s var(--ease), border-color .2s var(--ease);
+}
+.task-check input:checked + .checkmark{ background:var(--success); border-color:var(--success); }
+.task-check input:checked + .checkmark::after{ content:'✓'; color:#04140d; font-size:.85rem; font-weight:800; }
+.task-check input:disabled + .checkmark{ opacity:.4; }
 
-        .btn-success {
-            background: #00ff88;
-            color: #0a0a0f;
-        }
-        
-        .btn-undo {
-             background: #ffa500;
-             color: #0a0a0f;
-             margin-right: 15px;
-        }
+.task-text{ flex:1; font-size:.94rem; }
+.task-edit-input{
+  flex:1; background:var(--bg-soft); border:2px solid var(--violet); color:var(--text);
+  padding:9px 12px; border-radius:var(--radius-sm); font-size:.94rem;
+}
+.task-actions{ display:flex; gap:6px; flex-shrink:0; }
+.mini-btn{
+  width:32px; height:32px; border-radius:var(--radius-sm); border:1px solid var(--border);
+  background:var(--surface); font-size:.9rem; display:flex; align-items:center; justify-content:center;
+  transition:transform .18s var(--ease), border-color .18s var(--ease);
+}
+.mini-btn:hover:not(:disabled){ transform:translateY(-1px); border-color:var(--border-strong); }
+.mini-btn.success{ background:var(--success); color:#04140d; border-color:transparent; width:auto; padding:0 12px; }
+.mini-btn.ghost.text{ width:auto; padding:0 12px; }
+.mini-btn.danger{ color:var(--danger); }
 
-        .btn-edit {
-            background: #ffa500;
-            color: #0a0a0f;
-        }
+.add-task-btn{
+  margin-top:14px; padding:9px 16px; border-radius:var(--radius-pill);
+  border:1px dashed var(--border-strong); background:transparent; color:var(--text-dim); font-size:.85rem; font-weight:600;
+  transition:all .2s var(--ease);
+}
+.add-task-btn:hover{ border-style:solid; color:var(--text); border-color:var(--violet); }
 
-        .verse-box {
-            background: linear-gradient(135deg, rgba(138, 43, 226, 0.2), rgba(0, 191, 255, 0.2));
-            border: 2px solid #8a2be2;
-            border-radius: 15px;
-            padding: 25px;
-            text-align: center;
-            font-size: 1.2em;
-            line-height: 1.8;
-            direction: rtl;
-            font-family: 'Traditional Arabic', 'Arial', sans-serif;
-            box-shadow: 0 0 20px rgba(138, 43, 226, 0.4);
-            margin: 20px 0;
-        }
+/* Settings panel ---------------------------------------------------------------*/
+.settings-panel{ display:flex; flex-direction:column; gap:2px; }
+.settings-panel h2{ font-family:var(--font-serif); font-size:1.4rem; margin-bottom:14px; }
+.settings-row{
+  display:flex; align-items:center; justify-content:space-between;
+  padding:14px 0; border-top:1px solid var(--border);
+  gap:12px; flex-wrap:wrap;
+}
+.settings-row:first-of-type{ border-top:none; }
+.settings-row span{ font-size:.92rem; color:var(--text-dim); }
+.settings-row.danger-row span{ color:var(--danger); }
 
-        .motivation-box {
-            background: rgba(0, 191, 255, 0.2);
-            border: 2px solid #00bfff;
-            border-radius: 10px;
-            padding: 20px;
-            text-align: center;
-            font-size: 1.3em;
-            direction: rtl;
-            font-family: 'Traditional Arabic', 'Arial', sans-serif;
-            animation: pulse 2s ease-in-out infinite;
-        }
+/* Footer ----------------------------------------------------------------------*/
+.app-footer{
+  text-align:center; margin-top:34px; color:var(--text-faint); font-size:.85rem; line-height:1.8;
+}
+.app-footer p:first-child{ font-family:var(--font-serif); color:var(--text-dim); font-weight:600; }
 
-        @keyframes pulse {
-            0%, 100% { transform: scale(1); }
-            50% { transform: scale(1.02); }
-        }
+/* Toasts ------------------------------------------------------------------------*/
+.toast-container{
+  position:fixed; top:20px; right:20px; z-index:2000;
+  display:flex; flex-direction:column; gap:10px;
+  max-width:340px;
+}
+.toast{
+  background:var(--surface-solid); border:1px solid var(--border-strong);
+  border-left:4px solid var(--violet);
+  padding:14px 16px; border-radius:var(--radius-md);
+  box-shadow:0 14px 34px -16px rgba(0,0,0,.55);
+  font-size:.88rem;
+  animation:toastIn .35s var(--ease);
+}
+.toast.leaving{ animation:toastOut .3s var(--ease) forwards; }
+.toast.success{ border-left-color:var(--success); }
+.toast.warning{ border-left-color:var(--warning); }
+.toast.error{ border-left-color:var(--danger); }
+@keyframes toastIn{ from{ opacity:0; transform:translateX(40px);} to{ opacity:1; transform:none; } }
+@keyframes toastOut{ from{ opacity:1; transform:none;} to{ opacity:0; transform:translateX(40px);} }
+@media (max-width:600px){ .toast-container{ left:12px; right:12px; max-width:none; } }
 
-        .notification {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            background: linear-gradient(135deg, #8a2be2, #00bfff);
-            color: #fff;
-            padding: 20px 30px;
-            border-radius: 10px;
-            box-shadow: 0 10px 30px rgba(138, 43, 226, 0.6);
-            z-index: 1000;
-            animation: slideIn 0.5s ease;
-            max-width: 400px;
-        }
+/* Modal -------------------------------------------------------------------------*/
+.modal-overlay{
+  position:fixed; inset:0; background:rgba(4,4,10,.62); backdrop-filter:blur(3px);
+  display:flex; align-items:center; justify-content:center; z-index:3000; padding:20px;
+  animation:overlayIn .2s var(--ease);
+}
+@keyframes overlayIn{ from{ opacity:0; } to{ opacity:1; } }
+.modal{
+  background:var(--surface-solid); border:1px solid var(--border-strong);
+  border-radius:var(--radius-lg); padding:28px; max-width:420px; width:100%;
+  box-shadow:0 30px 70px -20px rgba(0,0,0,.6);
+  animation:modalIn .25s var(--ease);
+}
+@keyframes modalIn{ from{ opacity:0; transform:translateY(14px) scale(.98);} to{ opacity:1; transform:none; } }
+.modal h3{ font-family:var(--font-serif); font-size:1.25rem; margin-bottom:10px; }
+.modal p{ color:var(--text-dim); font-size:.92rem; margin-bottom:14px; }
+.modal-input{
+  width:100%; padding:11px 14px; border-radius:var(--radius-sm); border:1px solid var(--border-strong);
+  background:var(--bg-soft); color:var(--text); font-size:.95rem; margin-bottom:6px;
+}
+.modal-actions{ display:flex; justify-content:flex-end; gap:10px; margin-top:16px; }
 
-        .notification.warning {
-            background: linear-gradient(135deg, #ff3366, #ffa500);
-        }
-
-        @keyframes slideIn {
-            from { transform: translateX(400px); opacity: 0; }
-            to { transform: translateX(0); opacity: 1; }
-        }
-
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-            gap: 15px;
-            margin: 20px 0;
-        }
-
-        .stat-card {
-            background: rgba(138, 43, 226, 0.2);
-            border: 2px solid #8a2be2;
-            border-radius: 10px;
-            padding: 20px;
-            text-align: center;
-        }
-
-        .stat-number {
-            font-size: 2.5em;
-            color: #00bfff;
-            font-weight: bold;
-        }
-
-        .stat-label {
-            color: #ccc;
-            margin-top: 5px;
-        }
-
-        .alert-panel {
-            background: rgba(255, 51, 102, 0.2);
-            border: 2px solid #ff3366;
-            border-radius: 10px;
-            padding: 20px;
-            margin: 20px 0;
-        }
-
-        .alert-panel h3 {
-            color: #ff3366;
-            margin-bottom: 15px;
-        }
-
-        @media (max-width: 768px) {
-            .dashboard {
-                grid-template-columns: 1fr;
-            }
-            
-            .header h1 {
-                font-size: 1.8em;
-            }
-
-            .notification {
-                right: 10px;
-                left: 10px;
-                max-width: none;
-            }
-        }
-
-        ::-webkit-scrollbar {
-            width: 10px;
-        }
-
-        ::-webkit-scrollbar-track {
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 10px;
-        }
-
-        ::-webkit-scrollbar-thumb {
-            background: linear-gradient(180deg, #8a2be2, #00bfff);
-            border-radius: 10px;
-        }
-
-        .action-buttons {
-            display: flex;
-            gap: 8px;
-        }
-    </style>
+/* Utility ----------------------------------------------------------------------*/
+[hidden]{ display:none !important; }
+.visually-hidden{
+  position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0); white-space:nowrap;
+}
+</style>
 </head>
 <body>
-    <div class="container">
-        <div class="header">
-            <h1>📚 Christian Study Tracker</h1>
-            <p>Track your study progress with faith and dedication</p>
-        </div>
 
-        <div id="notification" class="notification" style="display: none;"></div>
+<div class="bg-decor" aria-hidden="true"></div>
+<div id="toastContainer" class="toast-container" aria-live="polite" aria-atomic="true"></div>
 
-        <div class="dashboard">
-            <div class="card">
-                <h2>📊 التقدم الأسبوعي</h2>
-                <div class="stats-grid">
-                    <div class="stat-card">
-                        <div class="stat-number" id="completedCount">0</div>
-                        <div class="stat-label">مكتمل</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-number" id="pendingCount">0</div>
-                        <div class="stat-label">قيد الانتظار</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-number" id="progressPercent">0</div>
-                        <div class="stat-label">% منجز</div>
-                    </div>
-                </div>
-                <div class="progress-bar">
-                    <div class="progress-fill" id="progressBar" style="width: 0%;">0%</div>
-                </div>
-                <button id="undoButton" class="btn btn-undo" onclick="revertLastAction()" disabled>↩️ تراجع عن الإجراء الأخير</button>
-            </div>
-
-            <div class="card">
-                <h2>📖 آية اليوم</h2>
-                <div class="verse-box" id="dailyVerse">جاري تحميل الآية...</div>
-                <button class="btn" onclick="changeVerse()" style="width: 100%; margin-top: 15px;">آية جديدة</button>
-            </div>
-
-            <div class="card">
-                <h2>💫 تشجيع روحي</h2>
-                <div class="motivation-box" id="motivation">ربنا معاك</div>
-                <button class="btn" onclick="changeMotivation()" style="width: 100%; margin-top: 15px;">رسالة جديدة</button>
-                
-                <div style="margin-top: 20px; padding: 15px; background: rgba(0, 191, 255, 0.1); border-radius: 10px; text-align: center;">
-                    <p style="color: #00bfff; font-weight: bold;">📖 تذكر قراءة الإنجيل اليوم!</p>
-                </div>
-            </div>
-        </div>
-
-        <div class="alert-panel" id="alertPanel" style="display: none;">
-            <h3>⚠️ تنبيه المساءلة</h3>
-            <div id="alertContent"></div>
-        </div>
-
-        <div class="card" style="margin-top: 50px;">
-            <h2>📅 خطة الدراسة الأسبوعية</h2>
-            <p style="color: #ccc; margin-bottom: 20px;">المهام للأيام القادمة مقفلة حتى يحين وقتها (منتصف الليل).</p>
-            <div id="studyPlan"></div>
-        </div>
+<div class="app" id="app">
+  <header class="hero" id="hero">
+    <svg class="cross-motif" viewBox="0 0 100 100" aria-hidden="true">
+      <line x1="50" y1="8" x2="50" y2="92" stroke-width="6" stroke-linecap="round"/>
+      <line x1="20" y1="34" x2="80" y2="34" stroke-width="6" stroke-linecap="round"/>
+    </svg>
+    <div class="hero-main">
+      <p class="hero-eyebrow" id="greeting">Good Evening</p>
+      <h1 class="hero-title">Christian Study Tracker</h1>
+      <p class="hero-sub">Study with discipline. Grow in faith.</p>
+      <div class="hero-meta">
+        <span id="heroDate">—</span>
+        <span class="dot">•</span>
+        <span id="heroClock">--:--:--</span>
+      </div>
     </div>
+    <div class="hero-side">
+      <div class="ring-wrap">
+        <svg class="ring" viewBox="0 0 120 120" role="img" aria-label="Weekly progress">
+          <defs>
+            <linearGradient id="ringGrad" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0%" stop-color="#8b6bff"/>
+              <stop offset="100%" stop-color="#39d3e0"/>
+            </linearGradient>
+          </defs>
+          <circle class="ring-track" cx="60" cy="60" r="52"></circle>
+          <circle class="ring-fill" id="weekRing" cx="60" cy="60" r="52"></circle>
+        </svg>
+        <div class="ring-label">
+          <strong id="weekRingPercent">0%</strong>
+          <span>this week</span>
+        </div>
+      </div>
+      <div class="hero-actions">
+        <button class="icon-btn" id="themeToggle" aria-label="Switch to light theme">🌙</button>
+        <button class="icon-btn" id="settingsBtn" aria-label="Open settings" aria-expanded="false">⚙️</button>
+      </div>
+    </div>
+  </header>
 
-    <script>
-        // --- Configuration & Data ---
-        // ترتيب الأيام في JavaScript (0=الأحد, 6=السبت)
-        const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-        
-        // ترتيب عرض الأيام في الخطة (السبت أولًا كما هو في خطتك)
-        const displayDaysOrder = ['Saturday', 'Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
-        
-        const studyPlanData = {
-            Saturday: [
-                "1st session: Math", "Break (10 min)", "2nd session: Math", "Break (15 min)", "Part of session: MO Salah", 
-                "Recap on the whole vocab in English", "Break (15 min) - Cup of tea ya m3alem", "More of Mo Salah", 
-                "Solving questions and last year's exams on the content studied"
-            ],
-            Sunday: [
-                "1st session of Physics", "Break (10 min)", "2nd session of Physics", "Break (30 min)", "1st session: Geo", 
-                "Revision on the math content", "Solving questions and last year's exams on the content studied", "Rest in peace, نام بقا"
-            ],
-            Monday: [
-                "1st session: Mecha", "2nd session: Mecha", "Break (15 min)", "The last part of session: MO Salah", 
-                "Recap on English content of Sunday", "Solving questions and last year's exams on the content studied"
-            ],
-            Tuesday: [
-                "1st session: Bio", "Break (10 min)", "2nd session: Bio", "Break (15 min)", "French revision لو قدرت", 
-                "Writing journals or part of MO Salah session", "Writing journal or solving bio questions", 
-                "Hatkhmed or solving Arabic questions"
-            ],
-            Wednesday: [
-                "1st session: Physics", "Break (10 min)", "2nd session: Physics", "Break (15 min)", 
-                "Arabic revision علي السخان متاخدش اكتر من 30 Min", "Learning new vocab and studying grammar", 
-                "Break (15 min)", "Coding and embedded system revision", "Solving questions and last year's exams on the content studied"
-            ],
-            Thursday: [
-                "1st session: Chem", "Break (10 min)", "2nd session: Chem", "Break (15 min)", "Study the second unit in French", 
-                "Revision on English vocab and novel", "Turn off the mood of studying and go out of home", 
-                "Solving questions and last year's exams on the content studied"
-            ],
-            Friday: [
-                "Going to church to attend the holy mass", "Revision on all sessions of math and mech", 
-                "From notebook and solving files hosny", "Studying parts of MO Salah Session", "Break (15 min)", 
-                "Solving questions and last year's exams on the content studied", "Break all of day", "Break all day"
-            ]
-        };
+  <main>
+    <section class="surface-card focus-card" id="focusCard" aria-label="Today's focus"></section>
 
-        const bibleVerses = [
-            "الرَّبَّ رَؤُوفٌ رَحِيمٌ، يَغْفِرُ الْخَطَايَا وَيُخَلِّصُ فِي يَوْمِ الضِّيقِ (يشوع بن سيراخ ٢: ١٣)",
-            "لأَنَّهُ تَعَلَّقَ بِي أُنَجِّيهِ... مَعَهُ أَنَا فِي الضِّيقْ، أُنْقِذُهُ وَأُمَجِّدُهُ (المزامير ٩١: ١٤–١٦)",
-            "ضِيْقٌ وَشِدَّةٌ أَصَابَانِي، أَمَّا وَصَايَاكَ فَهِيَ لَذَّاتِي (المزامير ١١٩: ١٤٣)",
-            "فَرِحِينَ فِي الرَّجَاءِ، صَابِرِينَ فِي الضَّيْقِ، مُواظِبِينَ عَلَى الصَّلاَةِ (رومية ١٢: ١٢)",
-            "فِي الْعَالَمِ سَيَكُونُ لَكُمْ ضِيقٌ، وَلكِنْ ثِقُوا: أَنَا قَدْ غَلَبْتُ الْعَالَمَ (يوحنا ١٦: ٣٣)",
-            "فَيُرْسِلُ لَهُمْ مُخَلِّصًا وَمُحَامِيًا وَيُنْقِذُهُمْ (إشعياء ١٩: ٢٠)",
-            "كَثِيرُونَ قَائِمُونَ عَلَيَّ... لَيْسَ لَهُ خَلاَصٌ بِإِلهِهِ (المزامير ٣: ١–٢)",
-            "لاَ تَحْزَنُوا، لأَنَّ فَرَحَ الرَّبِّ هُوَ قُوَّتُكُمْ (نحميا ٨: ١٠)",
-            "بِهِ يُنْتَهَى إِلَى النَّجَاحِ، وَبِكَلِمَتِهِ يَقُومُ الْجَمِيعُ (يشوع بن سيراخ ٤٣: ٢٨)",
-            "رُبَّ نَجَاحٍ يَكُونُ لأَذَى صَاحِبِهِ! (يشوع بن سيراخ ٢٠: ٩)",
-            "أَمَّا الْحِكْمَةُ فَنَافِعَةٌ لِلإِنْجَاحِ (الجامعة ١٠: ١٠)",
-            "إِنَّ إِلهَ السَّمَاءِ يُعْطِينَا النَّجَاحَ (نحميا ٢: ٢٠)",
-            "أَعْطِ النَّجَاحَ الْيَوْمَ لِعَبْدِكَ (نحميا ١: ١١)",
-            "كَانَ الرَّبُّ مَعَ يُوسُفَ فَكَانَ رَجُلًا نَاجِحًا (التكوين ٣٩: ٢)",
-            "أَرُومُ أَنْ تَكُونَ نَاجِحًا وَصَحِيحًا (٣ يوحنا ١: ٢)"
-        ];
+    <section class="stats-grid" id="statsGrid" aria-label="Weekly statistics"></section>
 
-        const motivations = [
-            "ربنا معاك", "ربنا موجود ومش هيسيبك", "ربنا بيختار لك الخير", "أنت مش لوحدك… ربنا سندك", 
-            "كمّل… نعمة ربنا مكفيّاك", "ربنا يفتح قدامك أبواب النجاح", "إنت محبوب من ربنا"
-        ];
-        
-        // --- State Variables ---
-        let tasks = {};
-        let editingTaskId = null;
-        let lastAction = null; 
+    <section class="calendar-strip" id="calendarStrip" aria-label="Weekly calendar"></section>
 
-        // --- Core Functions ---
+    <section class="dual-grid">
+      <div class="surface-card verse-card" id="verseCard">
+        <div class="card-head"><span class="card-icon">📖</span><h3>Verse of the Day</h3></div>
+        <div class="verse-text" id="verseText">Loading verse…</div>
+        <div class="verse-ref" id="verseRef"></div>
+        <div class="card-actions">
+          <button class="btn primary" id="newVerseBtn">New Verse</button>
+          <button class="btn ghost" id="copyVerseBtn">Copy</button>
+          <button class="btn ghost" id="shareVerseBtn">Share</button>
+        </div>
+      </div>
+      <div class="surface-card motivation-card" id="motivationCard">
+        <div class="card-head"><span class="card-icon">💫</span><h3>Encouragement</h3></div>
+        <div class="motivation-text" id="motivationText">ربنا معاك</div>
+        <div class="card-actions">
+          <button class="btn primary" id="newMotivationBtn">New Message</button>
+          <button class="btn ghost" id="copyMotivationBtn">Copy</button>
+        </div>
+      </div>
+    </section>
 
-        document.addEventListener('DOMContentLoaded', function() {
-            initializeTasks();
-            loadData();
-            renderStudyPlan();
-            changeVerse();
-            changeMotivation();
-            updateStats();
-            checkAccountability();
-            updateUndoButtonState();
-            
-            // تحديث الخطة عند منتصف الليل لفتح اليوم الجديد
-            scheduleMidnightUpdate();
+    <section class="surface-card accountability-card" id="accountabilityCard" aria-label="Accountability status"></section>
 
-            setTimeout(() => {
-                showNotification('🙏 ' + motivations[0]);
-            }, 2000);
+    <section class="toolbar">
+      <div class="search-wrap">
+        <input id="searchInput" type="search" placeholder="🔎 Search tasks..." aria-label="Search tasks">
+      </div>
+      <div class="filter-group" role="group" aria-label="Task filters" id="filterGroup">
+        <button class="filter-btn active" data-filter="all">All</button>
+        <button class="filter-btn" data-filter="completed">Completed</button>
+        <button class="filter-btn" data-filter="pending">Pending</button>
+        <button class="filter-btn" data-filter="today">Today</button>
+      </div>
+    </section>
+
+    <section class="plan-section">
+      <div class="section-heading">
+        <h2>Weekly Study Plan</h2>
+        <p>Future days unlock automatically at midnight. Nothing here can be skipped ahead of time.</p>
+      </div>
+      <div id="studyPlan"></div>
+    </section>
+
+    <section class="surface-card settings-panel" id="settingsPanel" hidden aria-label="Settings">
+      <h2>Settings</h2>
+      <div class="settings-row">
+        <span>Appearance</span>
+        <button class="btn ghost" id="themeToggleSettings">Switch to Light</button>
+      </div>
+      <div class="settings-row">
+        <span>Undo your last completion or restoration</span>
+        <button class="btn ghost" id="undoBtn" disabled>↩️ Undo Last Action</button>
+      </div>
+      <div class="settings-row">
+        <span>Save a copy of your tasks, streak and settings</span>
+        <button class="btn ghost" id="exportBtn">Export Data</button>
+      </div>
+      <div class="settings-row">
+        <span>Restore from a previously exported file</span>
+        <button class="btn ghost" id="importBtn">Import Data</button>
+      </div>
+      <div class="settings-row danger-row">
+        <span>Clear all progress and start the plan over</span>
+        <button class="btn danger" id="resetBtn">Reset Study Tracker</button>
+      </div>
+    </section>
+  </main>
+
+  <footer class="app-footer">
+    <p>Christian Study Tracker</p>
+    <p>Study with discipline. Grow with faith.</p>
+    <p id="footerYear"></p>
+  </footer>
+</div>
+
+<div class="modal-overlay" id="modalOverlay" hidden>
+  <div class="modal" id="modalBox" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+    <h3 id="modalTitle"></h3>
+    <p id="modalMessage" hidden></p>
+    <div id="modalBody"></div>
+    <div class="modal-actions" id="modalActions"></div>
+  </div>
+</div>
+
+<input type="file" id="importFileInput" accept="application/json" hidden aria-hidden="true">
+
+<script>
+(function(){
+'use strict';
+
+/* ============================================================
+   1. CONFIGURATION
+   ============================================================ */
+const STORAGE_KEY = 'christianStudyTrackerV2';
+const LEGACY_STORAGE_KEY = 'studyTrackerData';
+const dayNames = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+const displayDaysOrder = ['Saturday','Sunday','Monday','Tuesday','Wednesday','Thursday','Friday'];
+const dayShortLabels = { Saturday:'SAT', Sunday:'SUN', Monday:'MON', Tuesday:'TUE', Wednesday:'WED', Thursday:'THU', Friday:'FRI' };
+const TOAST_LIFETIME = 4200;
+const MAX_TOASTS = 4;
+
+/* ============================================================
+   2. DEFAULT DATA
+   ============================================================ */
+const studyPlanData = {
+  Saturday: [
+    "1st session: Math", "Break (10 min)", "2nd session: Math", "Break (15 min)", "Part of session: MO Salah",
+    "Recap on the whole vocab in English", "Break (15 min) - Cup of tea ya m3alem", "More of Mo Salah",
+    "Solving questions and last year's exams on the content studied"
+  ],
+  Sunday: [
+    "1st session of Physics", "Break (10 min)", "2nd session of Physics", "Break (30 min)", "1st session: Geo",
+    "Revision on the math content", "Solving questions and last year's exams on the content studied", "Rest in peace, نام بقا"
+  ],
+  Monday: [
+    "1st session: Mecha", "2nd session: Mecha", "Break (15 min)", "The last part of session: MO Salah",
+    "Recap on English content of Sunday", "Solving questions and last year's exams on the content studied"
+  ],
+  Tuesday: [
+    "1st session: Bio", "Break (10 min)", "2nd session: Bio", "Break (15 min)", "French revision لو قدرت",
+    "Writing journals or part of MO Salah session", "Writing journal or solving bio questions",
+    "Hatkhmed or solving Arabic questions"
+  ],
+  Wednesday: [
+    "1st session: Physics", "Break (10 min)", "2nd session: Physics", "Break (15 min)",
+    "Arabic revision علي السخان متاخدش اكتر من 30 Min", "Learning new vocab and studying grammar",
+    "Break (15 min)", "Coding and embedded system revision", "Solving questions and last year's exams on the content studied"
+  ],
+  Thursday: [
+    "1st session: Chem", "Break (10 min)", "2nd session: Chem", "Break (15 min)", "Study the second unit in French",
+    "Revision on English vocab and novel", "Turn off the mood of studying and go out of home",
+    "Solving questions and last year's exams on the content studied"
+  ],
+  Friday: [
+    "Going to church to attend the holy mass", "Revision on all sessions of math and mech",
+    "From notebook and solving files hosny", "Studying parts of MO Salah Session", "Break (15 min)",
+    "Solving questions and last year's exams on the content studied", "Break all of day", "Break all day"
+  ]
+};
+
+const bibleVerses = [
+  "الرَّبَّ رَؤُوفٌ رَحِيمٌ، يَغْفِرُ الْخَطَايَا وَيُخَلِّصُ فِي يَوْمِ الضِّيقِ (يشوع بن سيراخ ٢: ١٣)",
+  "لأَنَّهُ تَعَلَّقَ بِي أُنَجِّيهِ... مَعَهُ أَنَا فِي الضِّيقْ، أُنْقِذُهُ وَأُمَجِّدُهُ (المزامير ٩١: ١٤–١٦)",
+  "ضِيْقٌ وَشِدَّةٌ أَصَابَانِي، أَمَّا وَصَايَاكَ فَهِيَ لَذَّاتِي (المزامير ١١٩: ١٤٣)",
+  "فَرِحِينَ فِي الرَّجَاءِ، صَابِرِينَ فِي الضَّيْقِ، مُواظِبِينَ عَلَى الصَّلاَةِ (رومية ١٢: ١٢)",
+  "فِي الْعَالَمِ سَيَكُونُ لَكُمْ ضِيقٌ، وَلكِنْ ثِقُوا: أَنَا قَدْ غَلَبْتُ الْعَالَمَ (يوحنا ١٦: ٣٣)",
+  "فَيُرْسِلُ لَهُمْ مُخَلِّصًا وَمُحَامِيًا وَيُنْقِذُهُمْ (إشعياء ١٩: ٢٠)",
+  "كَثِيرُونَ قَائِمُونَ عَلَيَّ... لَيْسَ لَهُ خَلاَصٌ بِإِلهِهِ (المزامير ٣: ١–٢)",
+  "لاَ تَحْزَنُوا، لأَنَّ فَرَحَ الرَّبِّ هُوَ قُوَّتُكُمْ (نحميا ٨: ١٠)",
+  "بِهِ يُنْتَهَى إِلَى النَّجَاحِ، وَبِكَلِمَتِهِ يَقُومُ الْجَمِيعُ (يشوع بن سيراخ ٤٣: ٢٨)",
+  "رُبَّ نَجَاحٍ يَكُونُ لأَذَى صَاحِبِهِ! (يشوع بن سيراخ ٢٠: ٩)",
+  "أَمَّا الْحِكْمَةُ فَنَافِعَةٌ لِلإِنْجَاحِ (الجامعة ١٠: ١٠)",
+  "إِنَّ إِلهَ السَّمَاءِ يُعْطِينَا النَّجَاحَ (نحميا ٢: ٢٠)",
+  "أَعْطِ النَّجَاحَ الْيَوْمَ لِعَبْدِكَ (نحميا ١: ١١)",
+  "كَانَ الرَّبُّ مَعَ يُوسُفَ فَكَانَ رَجُلًا نَاجِحًا (التكوين ٣٩: ٢)",
+  "أَرُومُ أَنْ تَكُونَ نَاجِحًا وَصَحِيحًا (٣ يوحنا ١: ٢)"
+];
+
+const motivations = [
+  "ربنا معاك", "ربنا موجود ومش هيسيبك", "ربنا بيختار لك الخير", "أنت مش لوحدك… ربنا سندك",
+  "كمّل… نعمة ربنا مكفيّاك", "ربنا يفتح قدامك أبواب النجاح", "إنت محبوب من ربنا"
+];
+
+function buildDefaultTasks(){
+  const t = {};
+  Object.keys(studyPlanData).forEach(day=>{
+    t[day] = studyPlanData[day].map((text, index)=>({
+      id: day + '-' + index,
+      text: text,
+      completed: false
+    }));
+  });
+  return t;
+}
+
+function buildDefaultState(){
+  return {
+    tasks: buildDefaultTasks(),
+    lastAction: null,
+    streak: { current: 0, best: 0, completedDates: [] },
+    theme: 'dark'
+  };
+}
+
+/* ============================================================
+   3. STATE
+   ============================================================ */
+let state = buildDefaultState();
+let editingTaskId = null;
+let currentVerseIndex = -1;
+let currentMotivationIndex = -1;
+let searchTerm = '';
+let activeFilter = 'all';
+const expandedDays = new Set();
+let midnightTimer = null;
+let modalOnConfirm = null;
+
+/* ============================================================
+   Small helpers
+   ============================================================ */
+const $ = (sel, ctx) => (ctx || document).querySelector(sel);
+const $all = (sel, ctx) => Array.from((ctx || document).querySelectorAll(sel));
+function pad2(n){ return String(n).padStart(2,'0'); }
+function escapeHtml(str){
+  return String(str)
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+function formatDateKey(d){
+  return d.getFullYear() + '-' + pad2(d.getMonth()+1) + '-' + pad2(d.getDate());
+}
+function getTodayName(){
+  return dayNames[new Date().getDay()];
+}
+
+/* ============================================================
+   13. DATE / TIME MANAGEMENT
+   ============================================================ */
+function getPlanDayDate(dayName){
+  const today = new Date();
+  const todayIndex = today.getDay();
+  const planIndex = dayNames.indexOf(dayName);
+  let daysToAdd = planIndex - todayIndex;
+  if (daysToAdd < 0) daysToAdd += 7;
+  const planDayDate = new Date(today);
+  planDayDate.setDate(today.getDate() + daysToAdd);
+  return planDayDate;
+}
+
+function isDayLocked(day){
+  const today = new Date();
+  today.setHours(0,0,0,0);
+  const planDate = getPlanDayDate(day);
+  planDate.setHours(0,0,0,0);
+  return planDate.getTime() > today.getTime();
+}
+
+function updateClock(){
+  const now = new Date();
+  const hh = pad2(now.getHours()), mm = pad2(now.getMinutes()), ss = pad2(now.getSeconds());
+  $('#heroClock').textContent = hh + ':' + mm + ':' + ss;
+  $('#heroDate').textContent = now.toLocaleDateString('en-US', { weekday:'long', year:'numeric', month:'long', day:'numeric' });
+
+  const hour = now.getHours();
+  const greeting = hour < 12 ? 'Good Morning' : (hour < 18 ? 'Good Afternoon' : 'Good Evening');
+  const el = $('#greeting');
+  if (el.textContent !== greeting) el.textContent = greeting;
+}
+
+function scheduleMidnightUpdate(){
+  if (midnightTimer) clearTimeout(midnightTimer);
+  const now = new Date();
+  const midnight = new Date(now);
+  midnight.setDate(now.getDate() + 1);
+  midnight.setHours(0,0,1,0);
+  const timeToMidnight = midnight.getTime() - now.getTime();
+
+  midnightTimer = setTimeout(()=>{
+    expandedDays.clear();
+    expandedDays.add(getTodayName());
+    renderAll();
+    showToast('✨ New day unlocked! Today\'s plan is ready.', 'info');
+    scheduleMidnightUpdate();
+  }, timeToMidnight);
+}
+
+/* ============================================================
+   7. PROGRESS CALCULATION
+   ============================================================ */
+function computeDayTotals(day){
+  const list = state.tasks[day] || [];
+  const total = list.length;
+  const completed = list.filter(t => t.completed).length;
+  const percent = total ? Math.round((completed/total)*100) : 0;
+  return { total, completed, remaining: total - completed, percent };
+}
+
+function computeWeekTotals(){
+  let total = 0, completed = 0;
+  Object.keys(state.tasks).forEach(day=>{
+    state.tasks[day].forEach(t=>{ total++; if (t.completed) completed++; });
+  });
+  const percent = total ? Math.round((completed/total)*100) : 0;
+  return { total, completed, remaining: total - completed, percent };
+}
+
+/* ============================================================
+   8. STREAK SYSTEM
+   ============================================================ */
+function recomputeStreak(){
+  const dates = new Set(state.streak.completedDates);
+  let streak = 0;
+  const cursor = new Date();
+  cursor.setHours(0,0,0,0);
+  if (!dates.has(formatDateKey(cursor))){
+    cursor.setDate(cursor.getDate()-1);
+  }
+  while (dates.has(formatDateKey(cursor))){
+    streak++;
+    cursor.setDate(cursor.getDate()-1);
+  }
+  state.streak.current = streak;
+  state.streak.best = Math.max(state.streak.best || 0, streak);
+}
+
+function recordCompletionToday(){
+  const key = formatDateKey(new Date());
+  if (!state.streak.completedDates.includes(key)){
+    state.streak.completedDates.push(key);
+    if (state.streak.completedDates.length > 400){
+      state.streak.completedDates = state.streak.completedDates.slice(-400);
+    }
+  }
+  recomputeStreak();
+}
+
+/* ============================================================
+   10. LOCAL STORAGE
+   ============================================================ */
+function shapeLooksValid(data){
+  if (!data || typeof data !== 'object') return false;
+  if (!data.tasks || typeof data.tasks !== 'object') return false;
+  for (const day of displayDaysOrder){
+    if (!Array.isArray(data.tasks[day])) return false;
+    for (const task of data.tasks[day]){
+      if (!task || typeof task.id !== 'string' || typeof task.text !== 'string' || typeof task.completed !== 'boolean'){
+        return false;
+      }
+    }
+  }
+  return true;
+}
+
+function migrateLegacyData(){
+  try{
+    const raw = localStorage.getItem(LEGACY_STORAGE_KEY);
+    if (!raw) return null;
+    const legacy = JSON.parse(raw);
+    if (!legacy || !legacy.tasks) return null;
+    const merged = buildDefaultState();
+    Object.keys(merged.tasks).forEach(day=>{
+      const legacyDay = legacy.tasks[day];
+      if (Array.isArray(legacyDay)){
+        merged.tasks[day] = legacyDay
+          .filter(t => t && typeof t.text === 'string')
+          .map((t, i) => ({ id: day + '-legacy-' + i, text: t.text, completed: !!t.completed }));
+      }
+    });
+    return merged;
+  } catch(e){
+    return null;
+  }
+}
+
+function loadData(){
+  try{
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (raw){
+      const parsed = JSON.parse(raw);
+      if (shapeLooksValid(parsed)){
+        state.tasks = parsed.tasks;
+        state.lastAction = parsed.lastAction || null;
+        state.streak = parsed.streak && Array.isArray(parsed.streak.completedDates)
+          ? parsed.streak
+          : { current:0, best:0, completedDates:[] };
+        state.theme = parsed.theme === 'light' ? 'light' : 'dark';
+        recomputeStreak();
+        return;
+      }
+      throw new Error('Stored data failed validation');
+    }
+    const migrated = migrateLegacyData();
+    if (migrated){
+      state = migrated;
+      saveData();
+      return;
+    }
+  } catch(e){
+    console.error('Study Tracker: could not read saved data, restoring defaults.', e);
+    showToastQueued('⚠️ Saved data looked corrupted, so we restored a clean plan.', 'warning');
+  }
+}
+
+let queuedToast = null;
+function showToastQueued(msg, type){ queuedToast = { msg, type }; }
+
+function saveData(){
+  try{
+    const payload = {
+      version: 2,
+      tasks: state.tasks,
+      lastAction: state.lastAction,
+      streak: state.streak,
+      theme: state.theme
+    };
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
+  } catch(e){
+    console.error('Study Tracker: failed to save data.', e);
+    showToast('⚠️ Could not save your progress locally.', 'error');
+  }
+}
+
+/* ============================================================
+   11. IMPORT / EXPORT
+   ============================================================ */
+function exportData(){
+  const payload = {
+    version: 2,
+    exportedAt: new Date().toISOString(),
+    tasks: state.tasks,
+    lastAction: state.lastAction,
+    streak: state.streak,
+    theme: state.theme
+  };
+  const blob = new Blob([JSON.stringify(payload, null, 2)], { type:'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'study-tracker-export-' + formatDateKey(new Date()) + '.json';
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+  showToast('⬇️ Your data has been exported.', 'success');
+}
+
+function importDataFromFile(file){
+  const reader = new FileReader();
+  reader.onload = function(){
+    try{
+      const parsed = JSON.parse(reader.result);
+      if (!shapeLooksValid(parsed)){
+        showToast('⚠️ That file doesn\'t match the expected format. No changes were made.', 'error');
+        return;
+      }
+      state.tasks = parsed.tasks;
+      state.lastAction = parsed.lastAction || null;
+      state.streak = parsed.streak && Array.isArray(parsed.streak.completedDates)
+        ? parsed.streak : { current:0, best:0, completedDates:[] };
+      if (parsed.theme === 'light' || parsed.theme === 'dark') state.theme = parsed.theme;
+      recomputeStreak();
+      applyTheme();
+      saveData();
+      renderAll();
+      showToast('✅ Data imported successfully.', 'success');
+    } catch(e){
+      showToast('⚠️ That file could not be read as valid JSON. No changes were made.', 'error');
+    }
+  };
+  reader.onerror = function(){
+    showToast('⚠️ Could not read that file.', 'error');
+  };
+  reader.readAsText(file);
+}
+
+/* ============================================================
+   12. THEME
+   ============================================================ */
+function applyTheme(){
+  document.body.classList.toggle('light', state.theme === 'light');
+  const isLight = state.theme === 'light';
+  const icon = isLight ? '☀️' : '🌙';
+  $('#themeToggle').textContent = icon;
+  $('#themeToggle').setAttribute('aria-label', isLight ? 'Switch to dark theme' : 'Switch to light theme');
+  $('#themeToggleSettings').textContent = isLight ? 'Switch to Dark' : 'Switch to Light';
+}
+
+function toggleTheme(){
+  state.theme = state.theme === 'dark' ? 'light' : 'dark';
+  applyTheme();
+  saveData();
+}
+
+/* ============================================================
+   9. NOTIFICATIONS
+   ============================================================ */
+function showToast(message, type){
+  type = type || 'info';
+  const container = $('#toastContainer');
+  const toast = document.createElement('div');
+  toast.className = 'toast ' + type;
+  toast.textContent = message;
+  container.appendChild(toast);
+
+  while (container.children.length > MAX_TOASTS){
+    container.removeChild(container.firstChild);
+  }
+
+  setTimeout(()=>{
+    toast.classList.add('leaving');
+    setTimeout(()=> toast.remove(), 320);
+  }, TOAST_LIFETIME);
+}
+
+/* ============================================================
+   Modal system
+   ============================================================ */
+function openModal({ title, message, bodyHTML, actions, onOpen }){
+  $('#modalTitle').textContent = title || '';
+  const msgEl = $('#modalMessage');
+  if (message){ msgEl.textContent = message; msgEl.hidden = false; } else { msgEl.hidden = true; }
+  $('#modalBody').innerHTML = bodyHTML || '';
+  const actionsEl = $('#modalActions');
+  actionsEl.innerHTML = '';
+  (actions || []).forEach(a=>{
+    const btn = document.createElement('button');
+    btn.className = 'btn ' + (a.variant || 'ghost');
+    btn.textContent = a.label;
+    btn.addEventListener('click', a.onClick);
+    actionsEl.appendChild(btn);
+  });
+  $('#modalOverlay').hidden = false;
+  if (onOpen) requestAnimationFrame(onOpen);
+}
+
+function closeModal(){
+  $('#modalOverlay').hidden = true;
+  $('#modalBody').innerHTML = '';
+  modalOnConfirm = null;
+}
+
+/* ============================================================
+   6. TASK MANAGEMENT
+   ============================================================ */
+function findTask(id){
+  for (const day of displayDaysOrder){
+    const t = (state.tasks[day] || []).find(x => x.id === id);
+    if (t) return { task: t, day };
+  }
+  return null;
+}
+
+function toggleComplete(id){
+  const found = findTask(id);
+  if (!found) return;
+  const { task, day } = found;
+  if (isDayLocked(day)) return;
+
+  state.lastAction = { id, wasCompleted: task.completed };
+  task.completed = !task.completed;
+  if (task.completed) recordCompletionToday();
+
+  saveData();
+  renderAll();
+
+  if (task.completed){
+    showToast('✅ Task completed!', 'success');
+    setTimeout(changeMotivation, 900);
+  } else {
+    showToast('↩️ Task marked as pending again.', 'warning');
+  }
+}
+
+function revertLastAction(){
+  if (!state.lastAction) return;
+  const { id, wasCompleted } = state.lastAction;
+  const found = findTask(id);
+  if (found){
+    found.task.completed = wasCompleted;
+    state.lastAction = null;
+    saveData();
+    renderAll();
+    showToast('↩️ Last action reverted.', 'info');
+  }
+}
+
+function startEdit(id){
+  const found = findTask(id);
+  if (!found || isDayLocked(found.day)) return;
+  if (editingTaskId) return;
+  editingTaskId = id;
+  renderStudyPlan();
+  const input = document.getElementById('edit-' + id);
+  if (input){ input.focus(); input.setSelectionRange(input.value.length, input.value.length); }
+}
+
+function saveEdit(id){
+  const input = document.getElementById('edit-' + id);
+  if (!input) return;
+  const newText = input.value.trim();
+  if (!newText){
+    showToast('A task can\'t be empty.', 'warning');
+    return;
+  }
+  const found = findTask(id);
+  if (found){
+    found.task.text = newText;
+    editingTaskId = null;
+    saveData();
+    renderAll();
+    showToast('✏️ Task updated.', 'success');
+  }
+}
+
+function cancelEdit(){
+  editingTaskId = null;
+  renderStudyPlan();
+}
+
+function requestDeleteTask(id){
+  const found = findTask(id);
+  if (!found || isDayLocked(found.day)) return;
+  openModal({
+    title: 'Delete this task?',
+    message: '"' + found.task.text + '" will be permanently removed from ' + found.day + '.',
+    actions: [
+      { label:'Cancel', variant:'ghost', onClick: closeModal },
+      { label:'Delete', variant:'danger', onClick: ()=>{ confirmDeleteTask(id); closeModal(); } }
+    ]
+  });
+}
+
+function confirmDeleteTask(id){
+  const found = findTask(id);
+  if (!found) return;
+  state.tasks[found.day] = state.tasks[found.day].filter(t => t.id !== id);
+  if (state.lastAction && state.lastAction.id === id) state.lastAction = null;
+  saveData();
+  renderAll();
+  showToast('🗑️ Task deleted.', 'warning');
+}
+
+function requestAddTask(day){
+  if (isDayLocked(day)) return;
+  openModal({
+    title: 'Add a task to ' + day,
+    bodyHTML: '<input type="text" class="modal-input" id="newTaskInput" placeholder="Task name" maxlength="140">',
+    actions: [
+      { label:'Cancel', variant:'ghost', onClick: closeModal },
+      { label:'Add Task', variant:'primary', onClick: ()=> confirmAddTask(day) }
+    ],
+    onOpen: ()=>{
+      const input = document.getElementById('newTaskInput');
+      if (input){
+        input.focus();
+        input.addEventListener('keydown', (e)=>{
+          if (e.key === 'Enter'){ e.preventDefault(); confirmAddTask(day); }
         });
+      }
+    }
+  });
+}
 
-        function initializeTasks() {
-            Object.keys(studyPlanData).forEach(day => {
-                tasks[day] = studyPlanData[day].map((task, index) => ({
-                    id: `${day}-${index}`,
-                    text: task,
-                    completed: false,
-                    day: day
-                }));
-            });
-        }
-        
-        // دالة مصححة لحساب تاريخ الوقوع التالي ليوم الخطة
-        function getPlanDayDate(dayName) {
-            const today = new Date();
-            const todayIndex = today.getDay(); // 0 (Sunday) to 6 (Saturday)
-            const planIndex = dayNames.indexOf(dayName); // 0 (Sunday) to 6 (Saturday)
+function confirmAddTask(day){
+  const input = document.getElementById('newTaskInput');
+  if (!input) return;
+  const text = input.value.trim();
+  if (!text){
+    showToast('Give the task a name first.', 'warning');
+    return;
+  }
+  const id = day + '-new-' + Date.now().toString(36) + Math.random().toString(36).slice(2,6);
+  state.tasks[day].push({ id, text, completed:false });
+  closeModal();
+  saveData();
+  expandedDays.add(day);
+  renderAll();
+  showToast('➕ Task added to ' + day + '.', 'success');
+}
 
-            // حساب عدد الأيام اللازمة للوصول إلى اليوم المستهدف
-            let daysToAdd = planIndex - todayIndex;
-            
-            // إذا كان اليوم المستهدف قد مر بالفعل هذا الأسبوع (مثلاً: اليوم خميس وتطلب أحد)، أضف 7 أيام
-            if (daysToAdd < 0) {
-                daysToAdd += 7;
-            }
+/* ============================================================
+   5. RENDERING
+   ============================================================ */
+function matchesSearch(task){
+  if (!searchTerm) return true;
+  return task.text.toLowerCase().includes(searchTerm);
+}
+function matchesFilter(task, day){
+  if (activeFilter === 'completed') return task.completed;
+  if (activeFilter === 'pending') return !task.completed;
+  if (activeFilter === 'today') return day === getTodayName();
+  return true;
+}
 
-            const planDayDate = new Date(today);
-            planDayDate.setDate(today.getDate() + daysToAdd);
-            
-            return planDayDate;
-        }
+function renderFocus(){
+  const today = getTodayName();
+  const { total, completed, remaining, percent } = computeDayTotals(today);
+  let message;
+  if (total === 0){
+    message = 'No tasks scheduled for today.';
+  } else if (remaining === 0){
+    message = "🎉 You completed today's plan!";
+  } else {
+    message = '🔥 Keep going — you still have ' + remaining + ' task' + (remaining === 1 ? '' : 's') + '.';
+  }
 
-        function isDayLocked(day) {
-            const today = new Date();
-            // ضبط وقت اليوم الحالي إلى منتصف الليل للمقارنة فقط بالتاريخ
-            today.setHours(0, 0, 0, 0); 
-            
-            // الحصول على تاريخ الوقوع التالي ليوم الخطة
-            const planDate = getPlanDayDate(day);
-            planDate.setHours(0, 0, 0, 0); 
-            
-            // إذا كان تاريخ يوم الخطة أكبر تمامًا من تاريخ اليوم، فهو يوم مستقبلي ومقفل
-            return planDate.getTime() > today.getTime();
-        }
+  $('#focusCard').innerHTML =
+    '<div class="focus-head">' +
+      '<span class="focus-eyebrow">TODAY\'S FOCUS</span>' +
+      '<h2>' + today + '</h2>' +
+      '<div class="focus-progress">' +
+        '<div class="focus-bar"><div class="focus-bar-fill" style="width:' + percent + '%"></div></div>' +
+        '<span class="focus-percent">' + percent + '%</span>' +
+      '</div>' +
+      '<p class="focus-message">' + message + '</p>' +
+    '</div>' +
+    '<div class="focus-stats">' +
+      '<div><strong>' + total + '</strong><span>Tasks</span></div>' +
+      '<div><strong>' + completed + '</strong><span>Completed</span></div>' +
+      '<div><strong>' + remaining + '</strong><span>Remaining</span></div>' +
+    '</div>';
+}
 
-        function renderStudyPlan() {
-            const container = document.getElementById('studyPlan');
-            
-            container.innerHTML = displayDaysOrder.map(day => {
-                const isLocked = isDayLocked(day);
-                const dayTasks = tasks[day] || [];
-                const completedCount = dayTasks.filter(t => t.completed).length;
-                const totalCount = dayTasks.length;
-                
-                return `
-                    <div class="day-section ${isLocked ? 'locked' : ''}">
-                        <div class="day-header">
-                            <span>📅 ${day}</span>
-                            <span style="font-size: 0.9em; color: #ccc;">${completedCount}/${totalCount} مكتملة</span>
-                        </div>
-                        ${dayTasks.map(task => renderTask(task, isLocked)).join('')}
-                    </div>
-                `;
-            }).join('');
-        }
+function renderStats(){
+  const week = computeWeekTotals();
+  const today = computeDayTotals(getTodayName());
+  const cards = [
+    { icon:'📚', num: week.total, label:'Total Tasks' },
+    { icon:'✅', num: week.completed, label:'Completed' },
+    { icon:'⏳', num: week.remaining, label:'Remaining' },
+    { icon:'📈', num: today.percent + '%', label:"Today's Progress" },
+    { icon:'🔥', num: state.streak.current, label:'Day Streak (best ' + state.streak.best + ')' }
+  ];
+  $('#statsGrid').innerHTML = cards.map(c =>
+    '<div class="stat-card"><div class="stat-icon">' + c.icon + '</div>' +
+    '<div class="stat-number">' + c.num + '</div>' +
+    '<div class="stat-label">' + c.label + '</div></div>'
+  ).join('');
 
-        function renderTask(task, isLocked) {
-            if (editingTaskId === task.id) {
-                return `
-                    <div class="task-item editing">
-                        <input type="text" class="task-edit-input" id="edit-${task.id}" value="${task.text}">
-                        <div class="action-buttons">
-                            <button class="btn btn-success btn-small" onclick="saveEdit('${task.id}')">💾 حفظ</button>
-                            <button class="btn btn-danger btn-small" onclick="cancelEdit()">✕ إلغاء</button>
-                        </div>
-                    </div>
-                `;
-            }
-            
-            const disabled = isLocked ? 'disabled' : '';
-            
-            const submitButton = task.completed 
-                ? `<button class="btn btn-small" onclick="toggleComplete('${task.id}')" ${disabled}>🔄 إعادة</button>`
-                : `<button class="btn btn-success btn-small" onclick="toggleComplete('${task.id}')" ${disabled}>✅ إكمال</button>`;
+  const ring = document.getElementById('weekRing');
+  const circumference = 2 * Math.PI * 52;
+  ring.style.strokeDasharray = circumference.toFixed(2);
+  ring.style.strokeDashoffset = (circumference * (1 - week.percent/100)).toFixed(2);
+  $('#weekRingPercent').textContent = week.percent + '%';
+}
 
-            return `
-                <div class="task-item ${task.completed ? 'completed' : ''}">
-                    <div class="task-text">${task.text}</div>
-                    <div class="action-buttons">
-                        ${submitButton}
-                        <button class="btn btn-edit btn-small" onclick="startEdit('${task.id}')" ${disabled}>✏️ تعديل</button>
-                        <button class="btn btn-danger btn-small" onclick="deleteTask('${task.id}')" ${disabled}>🗑️</button>
-                    </div>
-                </div>
-            `;
-        }
+function renderCalendarStrip(){
+  const today = getTodayName();
+  $('#calendarStrip').innerHTML = displayDaysOrder.map(day=>{
+    const locked = isDayLocked(day);
+    const { completed, total, percent } = computeDayTotals(day);
+    const isToday = day === today;
+    let statusClass = 'st-none';
+    if (locked) statusClass = 'st-locked';
+    else if (percent === 100 && total > 0) statusClass = 'st-done';
+    else if (percent > 0) statusClass = 'st-progress';
+    return '<button class="cal-day ' + statusClass + (isToday ? ' today' : '') + (locked ? ' locked' : '') + '" ' +
+      'data-day="' + day + '" ' + (locked ? 'disabled' : '') + ' aria-label="' + day + ', ' + (locked ? 'locked' : percent + ' percent complete') + '">' +
+      '<span class="cal-label">' + dayShortLabels[day] + '</span>' +
+      '<span class="cal-percent">' + (locked ? '🔒' : percent + '%') + '</span>' +
+      '<span class="cal-count">' + completed + '/' + total + '</span>' +
+    '</button>';
+  }).join('');
+}
 
-        function toggleComplete(taskId) {
-            const [day] = taskId.split('-');
-            const task = tasks[day].find(t => t.id === taskId);
-            
-            if (task && !isDayLocked(day)) {
-                // تخزين الحالة قبل التغيير لزر التراجع
-                lastAction = { 
-                    id: taskId, 
-                    wasCompleted: task.completed, 
-                };
+function renderAccountability(){
+  const { total, completed, remaining } = computeWeekTotals();
+  const el = $('#accountabilityCard');
+  let statusClass, icon, title, message;
 
-                task.completed = !task.completed;
-                
-                saveData();
-                renderStudyPlan();
-                updateStats();
-                updateUndoButtonState();
-                
-                if (task.completed) {
-                    showNotification('✅ عمل رائع! تم إكمال المهمة!');
-                    setTimeout(() => {
-                        changeMotivation();
-                    }, 1500);
-                } else {
-                    showNotification('🔄 تم وضع المهمة كقيد انتظار/إعادة.', 'warning');
-                }
-            }
-        }
-        
-        function revertLastAction() {
-            if (!lastAction) return;
+  if (total === 0){
+    statusClass = 'status-yellow'; icon = '🟡'; title = 'Nothing Scheduled';
+    message = 'There are no tasks in the plan right now.';
+  } else if (completed === 0){
+    statusClass = 'status-yellow'; icon = '🟡'; title = 'Let\'s Begin';
+    message = 'You haven\'t started this week\'s tasks yet — starting today keeps the week on track.';
+  } else {
+    const percent = Math.round((completed/total)*100);
+    if (percent >= 65){
+      statusClass = 'status-green'; icon = '🟢'; title = 'Excellent';
+      message = 'You are on track this week.';
+    } else if (percent >= 35){
+      statusClass = 'status-yellow'; icon = '🟡'; title = 'Keep Going';
+      message = 'You have several unfinished tasks — steady progress will get you there.';
+    } else {
+      statusClass = 'status-red'; icon = '🔴'; title = 'Attention';
+      message = 'You have significantly more pending tasks than completed ones. A small step today helps.';
+    }
+  }
 
-            const { id: taskId, wasCompleted } = lastAction;
-            const [day] = taskId.split('-');
-            const task = tasks[day].find(t => t.id === taskId);
+  el.className = 'surface-card accountability-card ' + statusClass;
+  el.innerHTML =
+    '<span class="accountability-icon">' + icon + '</span>' +
+    '<div><div class="accountability-title">' + title + '</div>' +
+    '<div class="accountability-msg">' + message + '</div></div>';
+}
 
-            if (task) {
-                // استعادة الحالة السابقة
-                task.completed = wasCompleted;
-                
-                // مسح آخر إجراء
-                lastAction = null;
-                
-                saveData();
-                renderStudyPlan();
-                updateStats();
-                updateUndoButtonState();
-                
-                const actionReverted = wasCompleted ? 'مكتملة' : 'قيد الانتظار';
-                showNotification(`↩️ تم التراجع عن الإجراء. المهمة الآن ${actionReverted}.`);
-            }
-        }
+function renderTaskItem(task, day, locked){
+  if (editingTaskId === task.id){
+    return '<li class="task-item" data-id="' + task.id + '">' +
+      '<input type="text" class="task-edit-input" id="edit-' + task.id + '" value="' + escapeHtml(task.text) + '">' +
+      '<div class="task-actions">' +
+        '<button class="mini-btn success" data-action="saveEdit" data-id="' + task.id + '">Save</button>' +
+        '<button class="mini-btn ghost text" data-action="cancelEdit">Cancel</button>' +
+      '</div>' +
+    '</li>';
+  }
 
-        function updateUndoButtonState() {
-            const button = document.getElementById('undoButton');
-            if (button) {
-                button.disabled = !lastAction;
-            }
-        }
+  return '<li class="task-item ' + (task.completed ? 'completed' : '') + '" data-id="' + task.id + '">' +
+    '<label class="task-check">' +
+      '<input type="checkbox" ' + (task.completed ? 'checked' : '') + ' ' + (locked ? 'disabled' : '') +
+      ' data-action="toggle" data-id="' + task.id + '" aria-label="Mark task ' + (task.completed ? 'incomplete' : 'complete') + '">' +
+      '<span class="checkmark" aria-hidden="true"></span>' +
+    '</label>' +
+    '<span class="task-text">' + escapeHtml(task.text) + '</span>' +
+    '<div class="task-actions">' +
+      '<button class="mini-btn ghost" data-action="edit" data-id="' + task.id + '" ' + (locked ? 'disabled' : '') + ' aria-label="Edit task">✏️</button>' +
+      '<button class="mini-btn danger" data-action="delete" data-id="' + task.id + '" ' + (locked ? 'disabled' : '') + ' aria-label="Delete task">🗑️</button>' +
+    '</div>' +
+  '</li>';
+}
 
-        function scheduleMidnightUpdate() {
-            const now = new Date();
-            const midnight = new Date(now);
-            midnight.setDate(now.getDate() + 1);
-            midnight.setHours(0, 0, 1, 0); // 12:00:01 AM
-            
-            const timeToMidnight = midnight.getTime() - now.getTime();
-            
-            setTimeout(() => {
-                // تحديث الخطة فورًا عند منتصف الليل
-                renderStudyPlan();
-                showNotification('✨ يوم جديد سعيد! مهام اليوم الجديد متاحة الآن.', 'info');
-                // إعادة جدولة التحديث لليوم التالي
-                scheduleMidnightUpdate(); 
-            }, timeToMidnight);
-        }
-        
-        function startEdit(taskId) {
-            const [day] = taskId.split('-');
-            if (isDayLocked(day)) return; 
-            
-            if (editingTaskId) return; 
-            editingTaskId = taskId;
-            renderStudyPlan();
-            
-            const input = document.getElementById(`edit-${taskId}`);
-            if (input) {
-                input.focus();
-                input.setSelectionRange(input.value.length, input.value.length);
-            }
-        }
+function renderStudyPlan(){
+  const container = $('#studyPlan');
+  const today = getTodayName();
+  const searchOrFilterActive = !!searchTerm || activeFilter !== 'all';
 
-        function saveEdit(taskId) {
-            const input = document.getElementById(`edit-${taskId}`);
-            if (!input) return;
-            
-            const newText = input.value.trim();
-            if (!newText) {
-                showNotification('لا يمكن أن تكون المهمة فارغة!', 'warning');
-                return;
-            }
-            
-            const [day] = taskId.split('-');
-            const task = tasks[day].find(t => t.id === taskId);
-            
-            if (task) {
-                task.text = newText;
-                editingTaskId = null;
-                saveData();
-                renderStudyPlan();
-                showNotification('✏️ تم تحديث المهمة بنجاح!');
-            }
-        }
+  container.innerHTML = displayDaysOrder.map(day=>{
+    const locked = isDayLocked(day);
+    const isToday = day === today;
+    const dayTasks = state.tasks[day] || [];
+    const { completed, total, percent } = computeDayTotals(day);
+    const visibleTasks = dayTasks.filter(t => matchesSearch(t) && matchesFilter(t, day));
 
-        function cancelEdit() {
-            editingTaskId = null;
-            renderStudyPlan();
-        }
+    let expanded = expandedDays.has(day) || isToday;
+    if (searchOrFilterActive && visibleTasks.length > 0) expanded = true;
 
-        function deleteTask(taskId) {
-            const [day] = taskId.split('-');
-            if (isDayLocked(day)) return;
+    const tasksHtml = visibleTasks.length
+      ? visibleTasks.map(t => renderTaskItem(t, day, locked)).join('')
+      : '<li class="empty-note">' + (dayTasks.length === 0 ? 'No tasks left for this day. Add one to keep the plan going.' : 'No tasks match your search or filter.') + '</li>';
 
-            if (!confirm('هل أنت متأكد أنك تريد حذف هذه المهمة؟')) return;
-            
-            tasks[day] = tasks[day].filter(t => t.id !== taskId);
-            tasks[day].forEach((t, index) => t.id = `${day}-${index}`); 
+    return '<article class="day-card ' + (locked ? 'locked' : '') + (isToday ? ' is-today' : '') + '" id="day-' + day + '">' +
+      '<button class="day-header" data-day="' + day + '" aria-expanded="' + expanded + '">' +
+        '<span class="day-name">' + day + '</span>' +
+        (isToday ? '<span class="today-badge">TODAY 🔥</span>' : '') +
+        (locked ? '<span class="lock-badge">🔒 Locked</span>' : '') +
+        '<span class="day-progress-text">' + completed + '/' + total + '</span>' +
+        '<div class="day-progress-bar"><div class="day-progress-fill" style="width:' + percent + '%"></div></div>' +
+        '<span class="chevron">▾</span>' +
+      '</button>' +
+      '<div class="day-body" ' + (expanded ? '' : 'hidden') + '>' +
+        (locked ? '<p class="locked-note">This day unlocks on ' + getPlanDayDate(day).toLocaleDateString('en-US', { weekday:'long', month:'long', day:'numeric' }) + '.</p>' : '') +
+        '<ul class="task-list">' + tasksHtml + '</ul>' +
+        (!locked ? '<button class="add-task-btn" data-day="' + day + '">+ Add Task</button>' : '') +
+      '</div>' +
+    '</article>';
+  }).join('');
+}
 
-            saveData();
-            renderStudyPlan();
-            updateStats();
-            showNotification('🗑️ تم حذف المهمة');
-        }
+function renderAll(){
+  renderFocus();
+  renderStats();
+  renderCalendarStrip();
+  renderAccountability();
+  renderStudyPlan();
+  const undoBtn = $('#undoBtn');
+  if (undoBtn) undoBtn.disabled = !state.lastAction;
+  $('#footerYear').textContent = String(new Date().getFullYear());
+}
 
-        function updateStats() {
-            let totalCompleted = 0;
-            let totalTasks = 0;
-            
-            Object.keys(tasks).forEach(day => {
-                tasks[day].forEach(task => {
-                    totalTasks++;
-                    if (task.completed) totalCompleted++;
-                });
-            });
-            
-            const progress = totalTasks > 0 ? Math.round((totalCompleted / totalTasks) * 100) : 0;
-            
-            document.getElementById('completedCount').textContent = totalCompleted;
-            document.getElementById('pendingCount').textContent = totalTasks - totalCompleted;
-            document.getElementById('progressPercent').textContent = progress;
-            document.getElementById('progressBar').style.width = progress + '%';
-            document.getElementById('progressBar').textContent = progress + '%';
-            checkAccountability(); 
-        }
+/* ============================================================
+   Verse & motivation
+   ============================================================ */
+function parseVerse(full){
+  const match = full.match(/^(.*)\(([^()]*)\)\s*$/);
+  if (match){
+    return { text: match[1].trim(), ref: match[2].trim() };
+  }
+  return { text: full, ref: '' };
+}
 
-        function changeVerse() {
-            const verse = bibleVerses[Math.floor(Math.random() * bibleVerses.length)];
-            document.getElementById('dailyVerse').textContent = verse;
-        }
+function changeVerse(){
+  let idx = Math.floor(Math.random() * bibleVerses.length);
+  if (bibleVerses.length > 1 && idx === currentVerseIndex){
+    idx = (idx + 1) % bibleVerses.length;
+  }
+  currentVerseIndex = idx;
+  const parsed = parseVerse(bibleVerses[idx]);
+  const textEl = $('#verseText'), refEl = $('#verseRef');
+  textEl.classList.add('fade-swap');
+  refEl.classList.add('fade-swap');
+  setTimeout(()=>{
+    textEl.textContent = parsed.text;
+    refEl.textContent = parsed.ref;
+    textEl.classList.remove('fade-swap');
+    refEl.classList.remove('fade-swap');
+  }, 180);
+}
 
-        function changeMotivation() {
-            const message = motivations[Math.floor(Math.random() * motivations.length)];
-            document.getElementById('motivation').textContent = message;
-        }
+function changeMotivation(){
+  let idx = Math.floor(Math.random() * motivations.length);
+  if (motivations.length > 1 && idx === currentMotivationIndex){
+    idx = (idx + 1) % motivations.length;
+  }
+  currentMotivationIndex = idx;
+  const el = $('#motivationText');
+  el.classList.add('fade-swap');
+  setTimeout(()=>{
+    el.textContent = motivations[idx];
+    el.classList.remove('fade-swap');
+  }, 180);
+}
 
-        function checkAccountability() {
-            const alerts = [];
-            let totalPending = 0;
-            let totalCompleted = 0;
-            
-            Object.keys(tasks).forEach(day => {
-                tasks[day].forEach(task => {
-                    if (task.completed) totalCompleted++;
-                    else totalPending++;
-                });
-            });
-            
-            if (totalPending > totalCompleted && totalCompleted > 0) {
-                alerts.push('📉 لديك مهام معلقة أكثر من المكتملة. ابقَ مركزًا!');
-            }
-            
-            if (totalCompleted === 0 && totalPending > 10) {
-                alerts.push('⚠️ لم تبدأ مهامك الأسبوعية بعد. ابدأ اليوم!');
-            }
-            
-            const alertPanel = document.getElementById('alertPanel');
-            const alertContent = document.getElementById('alertContent');
-            
-            if (alerts.length > 0) {
-                alertPanel.style.display = 'block';
-                alertContent.innerHTML = alerts.map(alert => `<p style="margin: 10px 0;">${alert}</p>`).join('');
-            } else {
-                alertPanel.style.display = 'none';
-            }
-        }
+async function copyToClipboard(text){
+  try{
+    await navigator.clipboard.writeText(text);
+    showToast('📋 Copied to clipboard.', 'success');
+  } catch(e){
+    try{
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      ta.style.position = 'fixed';
+      ta.style.opacity = '0';
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand('copy');
+      ta.remove();
+      showToast('📋 Copied to clipboard.', 'success');
+    } catch(e2){
+      showToast('⚠️ Could not copy automatically — please select and copy manually.', 'warning');
+    }
+  }
+}
 
-        function showNotification(message, type = 'info') {
-            const notification = document.getElementById('notification');
-            notification.textContent = message;
-            notification.className = 'notification ' + (type === 'warning' ? 'warning' : '');
-            notification.style.display = 'block';
-            
-            setTimeout(() => {
-                notification.style.display = 'none';
-            }, 4000);
-        }
+async function shareVerse(){
+  const full = ($('#verseText').textContent + ' ' + $('#verseRef').textContent).trim();
+  if (navigator.share){
+    try{ await navigator.share({ text: full, title:'Verse of the Day' }); }
+    catch(e){ /* user cancelled share — no action needed */ }
+  } else {
+    copyToClipboard(full);
+  }
+}
 
-        // --- Local Storage Management ---
+/* ============================================================
+   Reset
+   ============================================================ */
+function requestReset(){
+  openModal({
+    title:'Reset Study Tracker?',
+    message:'This clears every completed task and your streak history, and restores the original weekly plan. This cannot be undone.',
+    actions:[
+      { label:'Cancel', variant:'ghost', onClick: closeModal },
+      { label:'Reset Everything', variant:'danger', onClick: ()=>{ performReset(); closeModal(); } }
+    ]
+  });
+}
 
-        function saveData() {
-            const dataToSave = {
-                tasks: tasks,
-                lastAction: lastAction
-            };
-            localStorage.setItem('studyTrackerData', JSON.stringify(dataToSave));
-        }
+function performReset(){
+  state = buildDefaultState();
+  state.theme = document.body.classList.contains('light') ? 'light' : 'dark';
+  editingTaskId = null;
+  expandedDays.clear();
+  expandedDays.add(getTodayName());
+  saveData();
+  renderAll();
+  showToast('🔄 Study Tracker has been reset.', 'info');
+}
 
-        function loadData() {
-            const saved = localStorage.getItem('studyTrackerData');
-            if (saved) {
-                const savedData = JSON.parse(saved);
-                
-                const savedTasks = savedData.tasks;
-                Object.keys(savedTasks).forEach(day => {
-                    if (tasks[day]) {
-                        tasks[day] = savedTasks[day];
-                    }
-                });
-                
-                lastAction = savedData.lastAction || null;
-            }
-        }
+/* ============================================================
+   14. EVENT HANDLERS
+   ============================================================ */
+function setupEventHandlers(){
+  $('#themeToggle').addEventListener('click', toggleTheme);
+  $('#themeToggleSettings').addEventListener('click', toggleTheme);
 
-        // --- Event Listeners ---
-        
-        setInterval(checkAccountability, 30000);
-        
-        document.addEventListener('keydown', function(e) {
-            if (e.key === 'Enter' && editingTaskId) {
-                saveEdit(editingTaskId);
-            } else if (e.key === 'Escape' && editingTaskId) {
-                cancelEdit();
-            }
-        });
-    </script>
+  $('#settingsBtn').addEventListener('click', ()=>{
+    const panel = $('#settingsPanel');
+    const willOpen = panel.hidden;
+    panel.hidden = !willOpen;
+    $('#settingsBtn').setAttribute('aria-expanded', String(willOpen));
+    if (willOpen) panel.scrollIntoView({ behavior:'smooth', block:'center' });
+  });
+
+  $('#undoBtn').addEventListener('click', revertLastAction);
+  $('#exportBtn').addEventListener('click', exportData);
+  $('#importBtn').addEventListener('click', ()=> $('#importFileInput').click());
+  $('#importFileInput').addEventListener('change', (e)=>{
+    const file = e.target.files && e.target.files[0];
+    if (file) importDataFromFile(file);
+    e.target.value = '';
+  });
+  $('#resetBtn').addEventListener('click', requestReset);
+
+  $('#newVerseBtn').addEventListener('click', changeVerse);
+  $('#copyVerseBtn').addEventListener('click', ()=> copyToClipboard(($('#verseText').textContent + ' ' + $('#verseRef').textContent).trim()));
+  $('#shareVerseBtn').addEventListener('click', shareVerse);
+  $('#newMotivationBtn').addEventListener('click', changeMotivation);
+  $('#copyMotivationBtn').addEventListener('click', ()=> copyToClipboard($('#motivationText').textContent));
+
+  $('#searchInput').addEventListener('input', (e)=>{
+    searchTerm = e.target.value.trim().toLowerCase();
+    renderStudyPlan();
+  });
+
+  $('#filterGroup').addEventListener('click', (e)=>{
+    const btn = e.target.closest('.filter-btn');
+    if (!btn) return;
+    activeFilter = btn.dataset.filter;
+    $all('.filter-btn', $('#filterGroup')).forEach(b => b.classList.toggle('active', b === btn));
+    renderStudyPlan();
+  });
+
+  $('#calendarStrip').addEventListener('click', (e)=>{
+    const btn = e.target.closest('.cal-day');
+    if (!btn || btn.disabled) return;
+    const day = btn.dataset.day;
+    expandedDays.add(day);
+    renderStudyPlan();
+    const target = document.getElementById('day-' + day);
+    if (target) target.scrollIntoView({ behavior:'smooth', block:'start' });
+  });
+
+  $('#studyPlan').addEventListener('click', (e)=>{
+    const header = e.target.closest('.day-header');
+    if (header && !e.target.closest('button[data-action]')){
+      const day = header.dataset.day;
+      if (expandedDays.has(day)) expandedDays.delete(day); else expandedDays.add(day);
+      renderStudyPlan();
+      return;
+    }
+    const addBtn = e.target.closest('.add-task-btn');
+    if (addBtn){ requestAddTask(addBtn.dataset.day); return; }
+
+    const actionBtn = e.target.closest('button[data-action]');
+    if (!actionBtn) return;
+    const id = actionBtn.dataset.id;
+    const action = actionBtn.dataset.action;
+    if (action === 'edit') startEdit(id);
+    else if (action === 'delete') requestDeleteTask(id);
+    else if (action === 'saveEdit') saveEdit(id);
+    else if (action === 'cancelEdit') cancelEdit();
+  });
+
+  $('#studyPlan').addEventListener('change', (e)=>{
+    const input = e.target.closest('input[data-action="toggle"]');
+    if (input) toggleComplete(input.dataset.id);
+  });
+
+  document.addEventListener('keydown', (e)=>{
+    if (e.key === 'Enter' && editingTaskId){ saveEdit(editingTaskId); }
+    else if (e.key === 'Escape'){
+      if (editingTaskId) cancelEdit();
+      else if (!$('#modalOverlay').hidden) closeModal();
+    }
+  });
+
+  $('#modalOverlay').addEventListener('click', (e)=>{
+    if (e.target === $('#modalOverlay')) closeModal();
+  });
+}
+
+/* ============================================================
+   4. INITIALIZATION
+   ============================================================ */
+document.addEventListener('DOMContentLoaded', function(){
+  loadData();
+  applyTheme();
+  setupEventHandlers();
+
+  expandedDays.add(getTodayName());
+
+  updateClock();
+  setInterval(updateClock, 1000);
+
+  renderAll();
+  changeVerse();
+  changeMotivation();
+  scheduleMidnightUpdate();
+
+  requestAnimationFrame(()=> $('#app').classList.add('is-ready'));
+
+  if (queuedToast){
+    setTimeout(()=> showToast(queuedToast.msg, queuedToast.type), 500);
+    queuedToast = null;
+  } else {
+    setTimeout(()=> showToast('🙏 ' + motivations[Math.floor(Math.random()*motivations.length)], 'info'), 1600);
+  }
+});
+
+})();
+</script>
 </body>
 </html>
